@@ -5,14 +5,14 @@
  */
 
 const adDatabase = {
-    // यहाँ अपने 20 डायरेक्ट लिंक्स डालें (12 Adsterra + 8 Monetag)
+    // یہاں اپنے 20 ڈائریکٹ لنکس ڈالیں (12 Adsterra + 8 Monetag)
     directLinks: [
         'LINK_1', 'LINK_2', 'LINK_3', 'LINK_4', 'LINK_5', 'LINK_6', 
         'LINK_7', 'LINK_8', 'LINK_9', 'LINK_10', 'LINK_11', 'LINK_12',
         'LINK_13', 'LINK_14', 'LINK_15', 'LINK_16', 'LINK_17', 'LINK_18', 
         'LINK_19', 'LINK_20'
     ],
-    // यहाँ 4 फिक्स एड्स के बैनर यूआरएल डालें
+    // یہاں 4 فکس ایڈز کے بینر یو آر ایل ڈالیں
     fixed: {
         header: 'FIXED_HEADER_URL',
         footer: 'FIXED_FOOTER_URL',
@@ -21,10 +21,10 @@ const adDatabase = {
     }
 };
 
-// रैंडम एड चुनने का फंक्शन
+// رینڈم ایڈ منتخب کرنے کا فنکشن
 const getAdUrl = () => adDatabase.directLinks[Math.floor(Math.random() * adDatabase.directLinks.length)];
 
-// फिक्स एड्स लोड करने का फंक्शन
+// فکس ایڈز لوڈ کرنے کا فنکشن
 function initFixedAds() {
     const placements = [
         { id: 'tag-fixed-header', url: adDatabase.fixed.header },
@@ -41,11 +41,11 @@ function initFixedAds() {
     });
 }
 
-// क्लिक इवेंट हैंडलर (सभी रैंडम बटन के लिए)
+// کلک ایونٹ ہینڈلر (تمام رینڈم بٹن کے لیے)
 document.addEventListener('click', function(event) {
     const targetId = event.target.id;
 
-    // ये वही IDs हैं जो तुमने लिस्ट में दी थीं - बिल्कुल मैचिंग हैं!
+    // یہ وہی IDs ہیں جو آپ نے لسٹ میں دی تھیں - بالکل میچنگ ہیں!
     const triggerIds = [
         'tag-btn-play-main',      // Play Button
         'tag-btn-server-shift-2', // Server 2
@@ -63,5 +63,5 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// पेज लोड होते ही फिक्स एड्स चलाएं
+// پیج لوڈ ہوتے ہی فکس ایڈز چلائیں
 window.addEventListener('DOMContentLoaded', initFixedAds);
