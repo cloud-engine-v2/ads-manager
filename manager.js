@@ -26,14 +26,12 @@ const MY_FIXED_BANNERS = {
 
 // ==========================================
 // यहाँ से नीचे "खतरे का इलाका" है - इसे न छुएं!
-// मशीन खुद ही ऊपर के 20 लिंक्स को बास्केट में बाँट लेगी।
 // ==========================================
 
 const AdMasterEngine = {
     baskets: { high: [], normal: [], low: [] },
     memory: new Set(),
 
-    // ऑटो-डिवीजन लॉजिक: पहले 10 हाई, अगले 6 नॉर्मल, आखिरी 4 लो
     autoDistribute: function() {
         this.baskets.high = MY_DIRECT_LINKS.slice(0, 10);
         this.baskets.normal = MY_DIRECT_LINKS.slice(10, 16);
@@ -48,7 +46,7 @@ const AdMasterEngine = {
     },
 
     getBestLink: function() {
-        this.autoDistribute(); // सुनिश्चित करें कि बास्केट अपडेटेड हैं
+        this.autoDistribute(); 
         const basketKey = this.selectBasket();
         let pool = this.baskets[basketKey];
         
@@ -68,6 +66,7 @@ const AdMasterEngine = {
     }
 };
 
+// यहाँ सिर्फ एक छोटा सा सुधार किया है ताकि क्लिक हमेशा ID को पकड़े
 document.addEventListener('click', function(e) {
     const ids = [
         'tag-btn-play-main', 'tag-btn-server-shift-2', 
@@ -75,14 +74,16 @@ document.addEventListener('click', function(e) {
         'tag-btn-auth-login', 'tag-btn-auth-send', 'tag-btn-theme-back-nav'
     ];
 
-    if (ids.includes(e.target.id)) {
+    // closest() का इस्तेमाल किया ताकि अगर आप बटन के किनारे पर भी क्लिक करें, तो वह ID ढूंढ ले
+    const targetButton = e.target.closest('[id]');
+    if (targetButton && ids.includes(targetButton.id)) {
         const link = AdMasterEngine.getBestLink();
-        AdMasterEngine.spyLog(e.target.id);
+        AdMasterEngine.spyLog(targetButton.id);
         window.open(link, '_blank');
     }
 });
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('load', () => { // DOMContentLoaded की जगह load ज्यादा भरोसेमंद है
     const bannerIds = {
         'tag-fixed-header': MY_FIXED_BANNERS.header,
         'tag-fixed-footer': MY_FIXED_BANNERS.footer,
