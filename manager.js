@@ -8,8 +8,8 @@
 // 1. अपनी 20 डायरेक्ट लिंक यहाँ पेस्ट करें
 // ==========================================
 const MY_DIRECT_LINKS = [
-    "ADD_URL_1",  "ADD_URL_2",  "ADD_URL_3",  "ADD_URL_4",  "ADD_URL_5",
-    "ADD_URL_6",  "ADD_URL_7",  "ADD_URL_8",  "ADD_URL_9",  "ADD_URL_10",
+    "https://www.blackbox.ai/",  "https://chat.deepseek.com/",  "https://chatgpt.com/",  "https://www.theverge.com/tech",  "https://tech.com.pk/",
+    "https://techcrunch.com/",  "https://www.techmeme.com/",  "https://rocketpay.co.in/",  "https://www.api.org/",  "https://www.ibm.com/",
     "ADD_URL_11", "ADD_URL_12", "ADD_URL_13", "ADD_URL_14", "ADD_URL_15",
     "ADD_URL_16", "ADD_URL_17", "ADD_URL_18", "ADD_URL_19", "ADD_URL_20"
 ];
