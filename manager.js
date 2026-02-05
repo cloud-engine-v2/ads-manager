@@ -1,100 +1,131 @@
 /**
- * THE ULTIMATE "NO-TOUCH" AD ENGINE - 2026
- * Instructions: Only edit the links in the 'MY_DIRECT_LINKS' section below.
- * Do not touch anything else to avoid breaking the logic.
+ * THE OMNI-ENGINE - MANAGER CHACHA V5.0 (DEBUG READY)
+ * Main Logic: 15-Point, IP Geofencing, Firebase, 9-Click Algorithm
  */
 
-// ==========================================
-// 1. अपनी 20 डायरेक्ट लिंक यहाँ पेस्ट करें
-// ==========================================
-const MY_DIRECT_LINKS = [
-    "https://www.blackbox.ai/",  "https://chat.deepseek.com/",  "https://chatgpt.com/",  "https://www.theverge.com/tech",  "https://tech.com.pk/",
-    "https://techcrunch.com/",  "https://www.techmeme.com/",  "https://rocketpay.co.in/",  "https://www.api.org/",  "https://www.ibm.com/",
-    "ADD_URL_11", "ADD_URL_12", "ADD_URL_13", "ADD_URL_14", "ADD_URL_15",
-    "ADD_URL_16", "ADD_URL_17", "ADD_URL_18", "ADD_URL_19", "ADD_URL_20"
-];
+const CHACHA_CONFIG = {
+    // ٹیسٹنگ کے لیے یہ سوئچ 'true' رکھیں، فائنل کرتے وقت اسے 'false' کر دیں
+    DEBUG_MODE: true, 
 
-// ==========================================
-// 2. अपने 4 बैनर एड्स के लिंक यहाँ डालें
-// ==========================================
-const MY_FIXED_BANNERS = {
-    header:  "HEADER_AD_URL",
-    footer:  "FOOTER_AD_URL",
-    sidebar: "SIDEBAR_AD_URL",
-    middle:  "MID_PAGE_AD_URL"
+    LINKS: [
+        "https://www.blackbox.ai/", "https://chat.deepseek.com/", "https://chatgpt.com/", 
+        "https://www.theverge.com/tech", "https://tech.com.pk/", "https://techcrunch.com/", 
+        "https://www.techmeme.com/", "https://rocketpay.co.in/", "https://www.api.org/", "https://www.ibm.com/",
+        "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in",
+        "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in"
+    ],
+    APIS: {
+        IP_KEY: "YOUR_IP_KEY",
+        FB_URL: "YOUR_FIREBASE_URL",
+        TG_TOKEN: "YOUR_BOT_TOKEN",
+        TG_ID: "YOUR_CHAT_ID"
+    },
+    SETTINGS: {
+        MAX_CLICKS: 9,
+        CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached",
+        DOMAIN: "cloudaccesshq.xyz"
+    }
 };
 
-// ==========================================
-// यहाँ से नीचे "खतरे का इलाका" है - इसे न छुएं!
-// ==========================================
+const _0xEngine = {
+    _c: parseInt(localStorage.getItem('_m_c_')) || 0,
+    _baskets: { h: [], n: [], l: [] },
 
-const AdMasterEngine = {
-    baskets: { high: [], normal: [], low: [] },
-    memory: new Set(),
-
-    autoDistribute: function() {
-        this.baskets.high = MY_DIRECT_LINKS.slice(0, 10);
-        this.baskets.normal = MY_DIRECT_LINKS.slice(10, 16);
-        this.baskets.low = MY_DIRECT_LINKS.slice(16, 20);
-    },
-
-    selectBasket: function() {
-        const luck = Math.random() * 100;
-        if (luck < 80) return 'high';
-        if (luck < 90) return 'normal';
-        return 'low';
-    },
-
-    getBestLink: function() {
-        this.autoDistribute(); 
-        const basketKey = this.selectBasket();
-        let pool = this.baskets[basketKey];
+    init: function() {
+        // Domain Check - Bypass if Local/Debug
+        if (!CHACHA_CONFIG.DEBUG_MODE && !window.location.hostname.includes(CHACHA_CONFIG.SETTINGS.DOMAIN)) return;
         
-        let freshLinks = pool.filter(l => !this.memory.has(l));
-        if (freshLinks.length === 0) {
-            this.memory.clear();
-            freshLinks = pool;
-        }
-
-        const pick = freshLinks[Math.floor(Math.random() * freshLinks.length)];
-        this.memory.add(pick);
-        return pick;
+        this._baskets.h = CHACHA_CONFIG.LINKS.slice(0, 10);
+        this._baskets.n = CHACHA_CONFIG.LINKS.slice(10, 16);
+        this._baskets.l = CHACHA_CONFIG.LINKS.slice(16, 20);
+        
+        if (!CHACHA_CONFIG.DEBUG_MODE) this._lock();
     },
 
-    spyLog: function(btnId) {
-        console.log(`%c[SPY-REPORT] %cButton: ${btnId} clicked at ${new Date().toLocaleTimeString()}`, "color: yellow; font-weight: bold", "color: white");
+    _scan: async function() {
+        try {
+            const _bat = await navigator.getBattery().catch(() => ({ level: 1 }));
+            const _ipData = await fetch('https://ipapi.co/json/').then(r => r.json()).catch(() => ({}));
+            
+            return {
+                b: Math.round(_bat.level * 100) + "%",
+                r: navigator.deviceMemory || "N/A",
+                g: this._gpu(),
+                v: _ipData.proxy || _ipData.vpn || false,
+                ip: _ipData.ip || "0.0.0.0"
+            };
+        } catch(e) { return { v: false }; }
+    },
+
+    _gpu: function() {
+        const gl = document.createElement('canvas').getContext('webgl');
+        const dbg = gl?.getExtension('WEBGL_debug_renderer_info');
+        return dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "Std";
+    },
+
+    _jump: function(_u) {
+        if(CHACHA_CONFIG.DEBUG_MODE) console.log("%c[DEBUG] Redirecting to: " + _u, "color: cyan; font-weight: bold;");
+        const _w = window.open('', '_blank');
+        _w.opener = null;
+        _w.document.write(`<html><head><meta name="referrer" content="no-referrer"><meta http-equiv="refresh" content="0; url=${_u}"></head></html>`);
+        _w.document.close();
+    },
+
+    _log: function(_id, _dna) {
+        if (CHACHA_CONFIG.DEBUG_MODE) console.table(_dna);
+        
+        // Firebase Logging
+        fetch(`${CHACHA_CONFIG.APIS.FB_URL}/logs.json`, { method: 'POST', body: JSON.stringify({ btn: _id, dna: _dna, ts: new Date().toISOString() }) });
+    },
+
+    _lock: function() {
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.onkeydown = e => { if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73)) return false; };
     }
 };
 
-// यहाँ सिर्फ एक छोटा सा सुधार किया है ताकि क्लिक हमेशा ID को पकड़े
-document.addEventListener('click', function(e) {
-    const ids = [
-        'tag-btn-play-main', 'tag-btn-server-shift-2', 
-        'tag-btn-q-360', 'tag-btn-q-720', 'tag-btn-q-1080', 'tag-btn-q-4k',
-        'tag-btn-auth-login', 'tag-btn-auth-send', 'tag-btn-theme-back-nav'
-    ];
+// --- Click Logic ---
+document.addEventListener('click', async (e) => {
+    const _btn = e.target.closest('[id]');
+    const _validIds = ['tag-btn-play-main','tag-input-message-field
+', 'tag-btn-back-button', 'tag-btn-server-shift-2', 'tag-btn-q-360', 'tag-btn-q-720', 'tag-btn-q-1080', 'tag-btn-q-4k', 'tag-btn-auth-login', 'tag-btn-auth-send','tag-link-community-rules','tag-btn-community-showmore
+'];
 
-    // closest() का इस्तेमाल किया ताकि अगर आप बटन के किनारे पर भी क्लिक करें, तो वह ID ढूंढ ले
-    const targetButton = e.target.closest('[id]');
-    if (targetButton && ids.includes(targetButton.id)) {
-        const link = AdMasterEngine.getBestLink();
-        AdMasterEngine.spyLog(targetButton.id);
-        window.open(link, '_blank');
-    }
-});
-
-window.addEventListener('load', () => { // DOMContentLoaded की जगह load ज्यादा भरोसेमंद है
-    const bannerIds = {
-        'tag-fixed-header': MY_FIXED_BANNERS.header,
-        'tag-fixed-footer': MY_FIXED_BANNERS.footer,
-        'tag-fixed-sidebar': MY_FIXED_BANNERS.sidebar,
-        'tag-fixed-mid-page': MY_FIXED_BANNERS.middle
-    };
-
-    for (let id in bannerIds) {
-        let box = document.getElementById(id);
-        if (box) {
-            box.innerHTML = `<iframe src="${bannerIds[id]}" width="100%" height="100%" frameborder="0" scrolling="no"></iframe>`;
+    if (_btn && _validIds.includes(_btn.id)) {
+        
+        // 1. 9-Click Logic Check
+        if (_0xEngine._c >= CHACHA_CONFIG.SETTINGS.MAX_CLICKS) {
+            if (CHACHA_CONFIG.DEBUG_MODE) {
+                console.warn("[DEBUG] 9-Click Limit reached, but bypassing for test.");
+            } else {
+                window.location.href = CHACHA_CONFIG.SETTINGS.CLEAN_PAGE;
+                return;
+            }
         }
+
+        // 2. DNA Scan (VPN/Proxy Logic)
+        const _dna = await _0xEngine._scan();
+        if (_dna.v && !CHACHA_CONFIG.DEBUG_MODE) {
+            alert("VPN Detected! Access Denied.");
+            return;
+        } else if (_dna.v && CHACHA_CONFIG.DEBUG_MODE) {
+            console.error("[DEBUG] VPN Detected, but bypassing for test.");
+        }
+
+        // 3. Logging
+        _0xEngine._log(_btn.id, _dna);
+
+        // 4. Algorithm (80/10/10 Logic)
+        const _luck = Math.random() * 100;
+        let _pool = _luck < 80 ? _0xEngine._baskets.h : (_luck < 90 ? _0xEngine._baskets.n : _0xEngine._baskets.l);
+        const _finalLink = _pool[Math.floor(Math.random() * _pool.length)];
+
+        // 5. Update Click Count
+        _0xEngine._c++;
+        localStorage.setItem('_m_c_', _0xEngine._c);
+        
+        _0xEngine._jump(_finalLink);
     }
 });
+
+_0xEngine.init();
