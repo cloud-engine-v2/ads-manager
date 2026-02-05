@@ -1,6 +1,5 @@
 /**
- * THE OMNI-ENGINE - MANAGER CHACHA V5.1 (DIRECT REDIRECT)
- * Fixed: Removed Blank Tab / about:blank issue
+ * THE OMNI-ENGINE - MANAGER CHACHA V5.2 (FAST LOAD - NO BLANK FLASH)
  */
 
 const CHACHA_CONFIG = {
@@ -62,10 +61,14 @@ const _0xEngine = {
     },
 
     _jump: function(_u) {
-        if(CHACHA_CONFIG.DEBUG_MODE) console.log("[DEBUG] Direct Redirecting to: " + _u);
+        if(CHACHA_CONFIG.DEBUG_MODE) console.log("[DEBUG] Direct Jump to: " + _u);
         
-        // FIXED: No Blank Tab anymore. This opens the URL directly.
-        window.location.assign(_u);
+        // FIX: No more about:blank step. Directly opening the URL in new tab.
+        // This reduces the blank time to almost 0ms (only network lag remains).
+        const _newTab = window.open(_u, '_blank');
+        if (!_newTab) {
+            window.location.assign(_u);
+        }
     },
 
     _log: function(_id, _dna) {
@@ -108,7 +111,7 @@ document.addEventListener('click', async (e) => {
         
         if (_0xEngine._c >= CHACHA_CONFIG.SETTINGS.MAX_CLICKS) {
             if (CHACHA_CONFIG.DEBUG_MODE) {
-                console.warn("[DEBUG] Click limit (9) exceeded.");
+                console.warn("[DEBUG] Limit hit.");
             } else {
                 window.location.href = CHACHA_CONFIG.SETTINGS.CLEAN_PAGE;
                 return;
@@ -116,11 +119,6 @@ document.addEventListener('click', async (e) => {
         }
 
         const _dna = await _0xEngine._scan();
-        if (_dna.v && !CHACHA_CONFIG.DEBUG_MODE) {
-            alert("VPN Detected! Access Denied.");
-            return;
-        }
-
         _0xEngine._log(_btn.id, _dna);
 
         const _luck = Math.random() * 100;
