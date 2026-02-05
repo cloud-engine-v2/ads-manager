@@ -1,10 +1,10 @@
 /**
- * THE OMNI-ENGINE - MANAGER CHACHA V5.1 (SILENT LIMIT)
- * Fixed: ID Syntax, New Tab Issue, Silent 9-Click for Testing
+ * THE OMNI-ENGINE - MANAGER CHACHA V5.1 (DIRECT REDIRECT)
+ * Fixed: Removed Blank Tab / about:blank issue
  */
 
 const CHACHA_CONFIG = {
-    DEBUG_MODE: true, // ٹیسٹنگ کے دوران اسے true رکھیں
+    DEBUG_MODE: true, 
 
     LINKS: [
         "https://www.blackbox.ai/", "https://chat.deepseek.com/", "https://chatgpt.com/", 
@@ -62,23 +62,15 @@ const _0xEngine = {
     },
 
     _jump: function(_u) {
-        if(CHACHA_CONFIG.DEBUG_MODE) console.log("[DEBUG] Triggering New Tab: " + _u);
+        if(CHACHA_CONFIG.DEBUG_MODE) console.log("[DEBUG] Direct Redirecting to: " + _u);
         
-        // NEW TAB FIX: Pop-up blockers کو چکمہ دینے کا طریقہ
-        const _newTab = window.open('about:blank', '_blank');
-        if (_newTab) {
-            _newTab.location.href = _u;
-            _newTab.focus();
-        } else {
-            // اگر براؤزر سخت بلاکر استعمال کر رہا ہے تو اسی پیج پر کھولے گا
-            window.location.assign(_u);
-        }
+        // FIXED: No Blank Tab anymore. This opens the URL directly.
+        window.location.assign(_u);
     },
 
     _log: function(_id, _dna) {
         if (CHACHA_CONFIG.DEBUG_MODE) console.table(_dna);
         
-        // Firebase URL چیک کرنے کے بعد ڈیٹا بھیجے گا
         if (CHACHA_CONFIG.APIS.FB_URL.startsWith('http')) {
             fetch(`${CHACHA_CONFIG.APIS.FB_URL}/logs.json`, { 
                 method: 'POST', 
@@ -97,7 +89,6 @@ const _0xEngine = {
 document.addEventListener('click', async (e) => {
     const _btn = e.target.closest('[id]');
     
-    // IDs کو درست فارمیٹ میں کر دیا گیا ہے
     const _validIds = [
         'tag-btn-play-main', 
         'tag-input-message-field', 
@@ -115,10 +106,9 @@ document.addEventListener('click', async (e) => {
 
     if (_btn && _validIds.includes(_btn.id)) {
         
-        // SILENT 9-CLICK LOGIC
         if (_0xEngine._c >= CHACHA_CONFIG.SETTINGS.MAX_CLICKS) {
             if (CHACHA_CONFIG.DEBUG_MODE) {
-                console.warn("[DEBUG] Click limit (9) exceeded, but continuing due to DEBUG_MODE.");
+                console.warn("[DEBUG] Click limit (9) exceeded.");
             } else {
                 window.location.href = CHACHA_CONFIG.SETTINGS.CLEAN_PAGE;
                 return;
