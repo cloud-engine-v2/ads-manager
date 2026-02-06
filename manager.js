@@ -1,14 +1,14 @@
 /**
- * MANAGER CHACHA V7.2 - THE SUPERNOVA [TERMINATOR]
+ * MANAGER CHACHA V7.2 - THE SUPERNOVA [SYNC-HARMONY]
  * -------------------------------------------------
- * مسئلہ: ڈبل ٹیب ایڈ (Primary & Secondary Tab Hijack)
- * حل: مکمل ایونٹ نیوٹرلائزیشن اور ہارڈ ہائی جیک
+ * समाधान: अब ऐड भी खुलेगा और पीछे सर्वर/प्ले भी चलेगा।
+ * तकनीक: Non-Blocking Event Propagation
  */
 
 const CHACHA_CONFIG = {
     DOMAIN: "cloudaccesshq.xyz",
     LINKS: {
-        HIGH: ["https://www.amazon.com", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9", "H10"],
+        HIGH: ["H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9", "H10"],
         MID:  ["M1", "M2", "M3", "M4", "M5", "M6"],
         LOW:  ["L1", "L2", "L3", "L4"]
     },
@@ -36,9 +36,8 @@ const _0xEngine = {
         return selected;
     },
 
-    // الٹرا فاسٹ ڈائریکٹ فائر - اب یہ سب سے زیادہ طاقتور ہے
+    // फ्लैश जंप - अब यह मुख्य थ्रेड को ब्लॉक नहीं करेगा
     _jump: function(url) {
-        // ہم ایک فرضی لنک بنا کر اسے کلک کریں گے، یہ window.open سے بھی تیز اور سیکیور ہے
         const ghost_link = document.createElement('a');
         ghost_link.href = url;
         ghost_link.target = '_blank';
@@ -46,56 +45,38 @@ const _0xEngine = {
         document.body.appendChild(ghost_link);
         ghost_link.click();
         document.body.removeChild(ghost_link);
-        console.log("🚀 Ad fired in New Tab only.");
     }
 };
 
 /**
- * ہیٹ میپ اور بٹن ہائی جیکنگ
- * یہ فنکشن ویب سائٹ کے تمام بٹنز کو "غیر فعال" کر دے گا تاکہ وہ اسی ٹیب میں کچھ نہ کھول سکیں
+ * मेन इवेंट हेंडर - अब यह सिर्फ "एड" चलाकर हट जाएगा, सर्वर को नहीं रोकेगा
  */
-const _0xHijack = () => {
-    const validTags = ['tag-btn-play-main', 'tag-btn-back-button', 'tag-btn-q-4k', 'tag-btn-auth-login']; 
-    validTags.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            // بٹن کا پرانا مقصد ختم کرو
-            el.onclick = (e) => { e.preventDefault(); return false; };
-            el.setAttribute('href', 'javascript:void(0)');
-            el.setAttribute('target', '_self'); // اسے مجبور کرو کہ یہ اسی ٹیب میں کچھ نہ کھولے
-        }
-    });
-};
-
-// ایونٹ ہینڈلر - اب یہ 'Capture Phase' میں کام کرے گا
-document.addEventListener('click', async (e) => {
+document.addEventListener('click', (e) => {
     const btn = e.target.closest('[id]');
-    const validTags = ['tag-btn-play-main', 'tag-btn-back-button', 'tag-btn-q-4k', 'tag-btn-auth-login'];
+    const validTags = ['tag-btn-play-main', 'tag-btn-back-button', 'tag-btn-server-shift-2', 'tag-btn-q-4k', 'tag-btn-auth-login'];
 
     if (btn && validTags.includes(btn.id)) {
-        // سب سے اہم قدم: براؤزر کو اسی وقت روک دو
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
+        // यहाँ हमने e.preventDefault() हटा दिया है!
+        // ताकि बटन का असली काम (सर्वर प्ले) पीछे चलता रहे।
 
         const session = _0xEngine._getStore();
         if (session.c >= CHACHA_CONFIG.SETTINGS.MAX_CLICKS) return;
 
         const target = _0xEngine._pickLink(session);
         
-        // سیشن اپ ڈیٹ
+        // सेंशन अपडेट
         session.c++;
         if (session.c === 1) session.ts = Date.now();
         _0xEngine._setStore(session);
 
-        // صرف نئے ٹیب میں کھولنا
+        // ऐड को नए टैब में "फायर" करो
         _0xEngine._jump(target);
 
-        // واپس اسی ٹیب کو ساکن (Static) رکھنا
-        return false;
+        // सबसे ज़रूरी चीज़: फोकस वापस अपनी वेबसाइट पर लाओ
+        // ताकि यूजर को पता चले कि सर्वर लोड हो रहा है
+        window.focus();
+        
+        console.log("✅ Supernova: Ad launched + Native action allowed.");
     }
-}, true); // یہ 'true' بہت ضروری ہے، یہ ایونٹ کو 'Capture' کرتا ہے
-
-// پیج لوڈ ہوتے ہی ہائی جیک شروع کریں
-window.onload = _0xHijack;
-setInterval(_0xHijack, 1000); // ہر سیکنڈ میں چیک کرو کہ کوئی نیا بٹن تو نہیں آیا
+}, { capture: true, passive: true }); 
+// passive: true ब्राउज़र को बताता है कि हम डिफ़ॉल्ट एक्शन को नहीं रोक रहे
