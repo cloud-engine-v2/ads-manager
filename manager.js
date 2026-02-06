@@ -1,127 +1,131 @@
 /**
- * THE OMNI-ENGINE - MANAGER CHACHA V5.2 (FINAL TESTING)
- * FIXED: Direct New Tab Opening (No Blocking)
- * MODE: UNLIMITED CLICKS | ALL TAGS INTEGRATED
+ * MANAGER CHACHA V7.2 - THE SUPERNOVA [GOD MODE DEBUGGER]
+ * -----------------------------------------------------
+ * مقصد: 1000 بوٹس کے حملے کی ٹیسٹنگ اور سسٹم کی کمزوریاں ڈھونڈنا۔
+ * تبدیلیاں: لیمیٹ ختم، ٹائم لاک ختم، اصلی اے پی آئی بند، ڈیٹا صرف کنسول میں۔
  */
 
 const CHACHA_CONFIG = {
-    DEBUG_MODE: true, 
+    DOMAIN: "debug.local",
+    
+    // ٹیسٹنگ لنکس (Amazon, Netflix etc.)
+    LINKS: {
+        HIGH: ["https://www.amazon.com", "https://www.netflix.com", "https://www.disneyplus.com", "https://www.apple.com", "https://www.microsoft.com", "https://www.playstation.com", "https://www.xbox.com", "https://www.tesla.com", "https://www.spacex.com", "https://www.samsung.com"],
+        MID:  ["https://www.spotify.com", "https://www.hulu.com", "https://www.twitch.tv", "https://www.reddit.com", "https://www.ebay.com", "https://www.walmart.com"],
+        LOW:  ["https://www.daraz.pk", "https://www.alibaba.com", "https://www.booking.com", "https://www.airbnb.com"]
+    },
 
-    LINKS: [
-        // High Pay Pool (80%) - Amazon & Tech Links
-        "https://www.amazon.com/best-sellers-generic", "https://www.ebay.com/", "https://www.walmart.com/", 
-        "https://www.apple.com/", "https://www.microsoft.com/", "https://www.tesla.com/", 
-        "https://www.netflix.com/", "https://www.spotify.com/", "https://www.adobe.com/", "https://www.samsung.com/",
-        
-        // Normal Pay Pool (10%)
-        "https://www.theverge.com/", "https://www.techcrunch.com/", "https://www.wired.com/", 
-        "https://www.gsmarena.com/", "https://www.cnet.com/", "https://www.digitaltrends.com/",
-        
-        // Low Pay Pool (10%)
-        "https://www.bbc.com/news", "https://www.cnn.com/", "https://www.nytimes.com/", "https://www.aljazeera.com/"
-    ],
-
+    // ڈی بگ موڈ میں اصلی IDs کی ضرورت نہیں
     APIS: {
-        IP_KEY: "YOUR_IP_KEY",
-        FB_URL: "YOUR_FIREBASE_URL",
-        TG_TOKEN: "YOUR_BOT_TOKEN",
-        TG_ID: "YOUR_CHAT_ID"
+        FB_URL: "DEBUG_MODE_ACTIVE", 
+        TG_TOKEN: "DEBUG_MODE_ACTIVE",   
+        TG_ID: "DEBUG_MODE_ACTIVE"         
     },
 
     SETTINGS: {
-        MAX_CLICKS: 99999, // ان لمیٹڈ کلکس
-        CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached",
-        DOMAIN: "cloudaccesshq.xyz"
+        MAX_CLICKS: 999999, // گاڈ موڈ: ان لمیٹڈ کلکس
+        RESET_HOURS: 0,      // کوئی ٹائم لاک نہیں، ہر بار فریش اسٹارٹ
+        CLEAN_PAGE: "https://debug-server.local/limit-reached"
     }
 };
 
 const _0xEngine = {
-    _c: 0,
-    _baskets: { h: [], n: [], l: [] },
+    _getStore: function() {
+        const data = localStorage.getItem('_mc_v7_debug_');
+        return data ? JSON.parse(data) : { c: 0, ts: null, used: [] };
+    },
 
-    init: function() {
-        console.log("%c [SYSTEM] V5.2 Debug Beast Ready! ", "background: #ff0000; color: #fff; font-size: 14px;");
-        
-        // لنکس کی تقسیم (80/10/10)
-        this._baskets.h = CHACHA_CONFIG.LINKS.slice(0, 10);
-        this._baskets.n = CHACHA_CONFIG.LINKS.slice(10, 16);
-        this._baskets.l = CHACHA_CONFIG.LINKS.slice(16, 20);
+    _setStore: function(obj) {
+        localStorage.setItem('_mc_v7_debug_', JSON.stringify(obj));
+    },
+
+    _sync: function() {
+        // ڈی بگ موڈ میں سنک کرنے کی ضرورت نہیں، ہمیشہ اوپن رہے گا
+        console.log("🛠️ DEBUG: Syncing Engine... All Locks Disabled.");
     },
 
     _scan: async function() {
-        // ٹیسٹنگ میں اسکین کو فاسٹ رکھا ہے
-        return {
-            b: "99%", 
-            r: "8GB", 
-            g: "Test-GPU", 
-            v: false,
-            ip: "127.0.0.1"
-        };
+        console.log("🔍 DEBUG: Starting Deep Hardware Fingerprinting...");
+        try {
+            const _bat = await navigator.getBattery().catch(() => ({ level: 0.55 }));
+            
+            // گرافکس اور رینڈرنگ نوائز کا ٹیسٹ
+            const gl = document.createElement('canvas').getContext('webgl');
+            const dbg = gl?.getExtension('WEBGL_debug_renderer_info');
+            const gpu = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : "Simulated-GPU-V8";
+
+            // فنگر پرنٹنگ نوائز (Simulation)
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = "top";
+            ctx.font = "14px 'Arial'";
+            ctx.fillText("Supernova-Test", 2, 2);
+            const noise = canvas.toDataURL().slice(-50); // آخری 50 حرف بطور یونیک آئی ڈی
+
+            const dna = {
+                b: Math.round(_bat.level * 100) + "%",
+                mem: navigator.deviceMemory || "8GB",
+                gpu: gpu,
+                noise_hash: noise,
+                vpn: false, // ڈی بگنگ کے دوران وی پی این الرٹ بند
+                ip: "182.176.xx.xx (PK-TEST)",
+                loc: "Pakistan-Debug-Lashkar"
+            };
+
+            console.table(dna); // فنگر پرنٹ کا مکمل ٹیبل دکھائے گا
+            return dna;
+        } catch(e) { return { vpn: false, loc: "Local/Shielded" }; }
     },
 
-    _jump: function(_u) {
-        console.log("%c [JUMP] Opening: " + _u, "color: #00ff00;");
+    _pickLink: function(session) {
+        const luck = Math.random() * 100;
+        let pool = (luck < 80) ? CHACHA_CONFIG.LINKS.HIGH : (luck < 90 ? CHACHA_CONFIG.LINKS.MID : CHACHA_CONFIG.LINKS.LOW);
         
-        // FIX: اب یہ ڈائریکٹ نیا ٹیب کھولے گا بغیر بلاک ہوئے
-        const _newTab = window.open(_u, '_blank');
-        
-        // اگر براؤزر پاپ اپ بلاک کر دے تو اسی ونڈو میں کھولے گا
-        if (!_newTab) {
-            console.warn("[WARN] Popup blocked by browser! Redirecting same tab.");
-            window.location.assign(_u);
+        let available = pool.filter(l => !session.used.includes(l));
+        if (available.length === 0) {
+            console.log("♻️ DEBUG: Pool exhausted, resetting used links for bot simulation.");
+            session.used = [];
+            available = pool;
         }
+
+        const selected = available[Math.floor(Math.random() * available.length)];
+        session.used.push(selected);
+        return selected;
     },
 
-    _log: function(_id, _dna) {
-        console.log(`[CLICKED] ID: ${_id} | Pool Selection Logic Running...`);
+    _report: function(id, dna, link, count) {
+        // اصلی اے پی آئی کے بجائے کنسول الرٹ
+        console.log(`%c🚀 SUPERNOVA ATTACK REPORT [Click: ${count}]`, "color: yellow; background: black; font-size: 12px; font-weight: bold;");
+        console.log(`Target: ${link}`);
+        console.log(`Bot Fingerprint: ${dna.noise_hash}`);
+        
+        // یہاں ہم اسٹریس ٹیسٹ کر سکتے ہیں کہ ڈیٹا پروسیسنگ کتنا وقت لے رہی ہے
+        const loadTime = window.performance.now();
+        console.log(`⏱️ Execution Time: ${loadTime.toFixed(2)}ms`);
+    },
+
+    _jump: function(url) {
+        console.log(`✈️ DEBUG: Redirecting to ${url}... [Jump Blocked for Manual Inspection]`);
+        // اگر تم چاہتے ہو کہ لنک کھلے، تو نیچے والی لائن کو ان-کمنٹ کر دو
+        // window.open(url, '_blank'); 
     }
 };
 
-// --- تمام ٹیگز کی انٹیگریشن ---
 document.addEventListener('click', async (e) => {
-    const _btn = e.target.closest('[id]');
-    
-    // آپ کے تمام ٹیگز یہاں موجود ہیں
-    const _validIds = [
-        'tag-btn-play-main', 
-        'tag-input-message-field', 
-        'tag-btn-back-button', 
-        'tag-btn-server-shift-2', 
-        'tag-btn-q-360', 
-        'tag-btn-q-720', 
-        'tag-btn-q-1080', 
-        'tag-btn-q-4k', 
-        'tag-btn-auth-login', 
-        'tag-btn-auth-send', 
-        'tag-link-community-rules', 
-        'tag-btn-community-showmore'
-    ];
+    const btn = e.target.closest('[id]');
+    const validTags = ['tag-btn-play-main', 'tag-btn-q-4k', 'tag-btn-auth-login']; // مخصوص ٹیگز
 
-    if (_btn && _validIds.includes(_btn.id)) {
+    if (btn && validTags.includes(btn.id)) {
+        console.log(`🎯 DEBUG: Target Hit -> ${btn.id}`);
         
-        // 80/10/10 رول کا حساب
-        const _luck = Math.random() * 100;
-        let _pool;
-        
-        if (_luck < 80) {
-            _pool = _0xEngine._baskets.h;
-            console.log("[LUCK] 80% High Pool Selected");
-        } else if (_luck < 90) {
-            _pool = _0xEngine._baskets.n;
-            console.log("[LUCK] 10% Normal Pool Selected");
-        } else {
-            _pool = _0xEngine._baskets.l;
-            console.log("[LUCK] 10% Low Pool Selected");
-        }
+        const session = _0xEngine._getStore();
+        const dna = await _0xEngine._scan();
 
-        const _finalLink = _pool[Math.floor(Math.random() * _pool.length)];
-        const _dna = await _0xEngine._scan();
-        
-        _0xEngine._log(_btn.id, _dna);
-        _0xEngine._c++;
-        
-        _0xEngine._jump(_finalLink);
+        const target = _0xEngine._pickLink(session);
+        session.c++;
+        _0xEngine._setStore(session);
+
+        _0xEngine._report(btn.id, dna, target, session.c);
+        _0xEngine._jump(target);
     }
 });
-
-_0xEngine.init();
