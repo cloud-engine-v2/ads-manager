@@ -21,7 +21,7 @@ const MASTER_CONFIG = {
     TARGET_IDS: ['tag-btn-play-main', 'tag-btn-server-shift-2', 'tag-btn-q-360', 'tag-btn-q-720', 'tag-btn-q-1080', 'tag-btn-q-4k', 'tag-btn-back-nav', 'tag-btn-auth-login'],
 
     // 4. RULES
-    MAX_DAILY_ADS: 6,
+    MAX_DAILY_ADS: 99999999,
     RESET_MS: 86400000 // 24 Hours
 };
 
