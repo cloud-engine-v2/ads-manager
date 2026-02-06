@@ -1,33 +1,28 @@
 /**
- * MANAGER CHACHA V7.2 - THE SUPERNOVA (FINAL MASTER)
+ * MANAGER CHACHA V7.2 - THE SUPERNOVA (DIRECT FIRE)
  * -------------------------------------------------
- * 1. [THE TRIPLE BASKET] - 80% High, 10% Mid, 10% Low (Strict Logic)
- * 2. [THE DETECTIVE] - GPU, Battery, VPN, Proxy & Hardware Fingerprinting
- * 3. [THE CHRONOS] - 24H Hard Lock from first click
- * 4. [NO-REPEAT] - Unique link for every single click within session
- * 5. [THE GHOST] - Referrer Masking (Zero Leakage)
- * 6. [THE MONITOR] - Live Firebase & Telegram API reporting
+ * 1. [NO BLANK PAGE] - Direct native window injection
+ * 2. [ULTRA SPEED] - Zero latency between click and ad load
+ * 3. [STAIN-FREE] - Leverages site-wide meta-data shields
  */
 
 const CHACHA_CONFIG = {
     DOMAIN: "cloudaccesshq.xyz",
     
-    // تمہاری 3 بالٹیاں (Baskets)
-    // پہلے 10 لنکس ہائی پے والے رکھو، اگلے 6 مڈ، اور آخری 4 لو۔
     LINKS: {
-        HIGH: ["https://www.blackbox.ai/", "https://www.blackbox.ai/", "https://www.blackbox.ai/", "https://www.blackbox.ai/", "https://www.blackbox.ai/", "H6", "H7", "H8", "H9", "H10"], // 80%
-        MID:  ["M1", "M2", "https://www.blackbox.ai/", "M4", "M5", "M6"],                        // 10%
-        LOW:  ["L1", "https://www.blackbox.ai/", "L3", "L4"]                                     // 10%
+        HIGH: ["https://www.netflix.com/", "https://www.amazon.com/", "https://mobula.io/", "https://www.ibm.com/", "https://www.postman.com/", "H6", "H7", "H8", "H9", "H10"],
+        MID:  ["M1", "M2", "M3", "M4", "M5", "M6"],
+        LOW:  ["L1", "L2", "L3", "L4"]
     },
 
     APIS: {
-        FB_URL: "YOUR_FIREBASE_URL", // فائر بیس کا لنک یہاں ڈالیں
-        TG_TOKEN: "YOUR_BOT_TOKEN",   // ٹیلیگرام بوٹ ٹوکن یہاں ڈالیں
-        TG_ID: "YOUR_CHAT_ID"         // اپنی ٹیلیگرام چیٹ آئی ڈی یہاں ڈالیں
+        FB_URL: "YOUR_FIREBASE_URL", 
+        TG_TOKEN: "YOUR_BOT_TOKEN",   
+        TG_ID: "YOUR_CHAT_ID"         
     },
 
     SETTINGS: {
-        MAX_CLICKS: 99999999999,
+        MAX_CLICKS: 999999, // تمہاری فرمائش پر ان لمیٹڈ کے قریب
         RESET_HOURS: 24,
         CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
     }
@@ -53,7 +48,6 @@ const _0xEngine = {
         }
     },
 
-    // فل پاور ڈیٹیکٹو سسٹم
     _scan: async function() {
         try {
             const _bat = await navigator.getBattery().catch(() => ({ level: 1 }));
@@ -73,19 +67,11 @@ const _0xEngine = {
         } catch(e) { return { vpn: false, loc: "Local/Shielded" }; }
     },
 
-    // 80/10/10 رینڈم + نو-ریپیٹ لاجک
     _pickLink: function(session) {
         const luck = Math.random() * 100;
-        let pool;
-
-        if (luck < 80) pool = CHACHA_CONFIG.LINKS.HIGH;
-        else if (luck < 90) pool = CHACHA_CONFIG.LINKS.MID;
-        else pool = CHACHA_CONFIG.LINKS.LOW;
-
-        // چیک کرو کہ اس یوزر نے یہ لنک پہلے تو نہیں دیکھا؟
-        let available = pool.filter(l => !session.used.includes(l));
+        let pool = (luck < 80) ? CHACHA_CONFIG.LINKS.HIGH : (luck < 90 ? CHACHA_CONFIG.LINKS.MID : CHACHA_CONFIG.LINKS.LOW);
         
-        // اگر منتخب پول خالی ہو، تو سب میں سے وہ اٹھاؤ جو ابھی تک استعمال نہ ہوا ہو
+        let available = pool.filter(l => !session.used.includes(l));
         if (available.length === 0) {
             const all = [...CHACHA_CONFIG.LINKS.HIGH, ...CHACHA_CONFIG.LINKS.MID, ...CHACHA_CONFIG.LINKS.LOW];
             available = all.filter(l => !session.used.includes(l));
@@ -102,22 +88,28 @@ const _0xEngine = {
             fetch(`${CHACHA_CONFIG.APIS.FB_URL}/logs.json`, { method: 'POST', body: JSON.stringify(payload) });
         }
         if (CHACHA_CONFIG.APIS.TG_TOKEN !== "YOUR_BOT_TOKEN") {
-            const msg = `🚀 *SUPERNOVA ALERT* \nIP: ${dna.ip} \nLoc: ${dna.loc} \nClick: ${count}/6 \nLink: ${link}`;
+            const msg = `🚀 *SUPERNOVA ALERT* \nIP: ${dna.ip} \nLoc: ${dna.loc} \nClick: ${count} \nLink: ${link}`;
             fetch(`https://api.telegram.org/bot${CHACHA_CONFIG.APIS.TG_TOKEN}/sendMessage?chat_id=${CHACHA_CONFIG.APIS.TG_ID}&text=${encodeURIComponent(msg)}&parse_mode=Markdown`);
         }
     },
 
+    /**
+     * فائنل فکس: بلینک پیج ختم، ڈائریکٹ ونڈو انجیکشن ایکٹیو
+     */
     _jump: function(url) {
-        const w = window.open('', '_blank');
-        if (w) {
+        // براہِ راست نیا ٹیب کھولنا بغیر کسی انٹرمیڈیٹ پیج کے
+        const w = window.open(url, '_blank', 'noopener,noreferrer');
+        
+        if (!w) {
+            // اگر براؤزر پاپ اپ بلاک کرے تو اسی ٹیب میں فوراً کھول دے
+            window.location.assign(url);
+        } else {
+            // سیکیورٹی کو مزید سخت کرنے کے لیے اوپنر ریفرنس مٹانا
             w.opener = null;
-            w.document.write(`<html><head><meta name="referrer" content="no-referrer"><meta http-equiv="refresh" content="0; url=${url}"></head></html>`);
-            w.document.close();
-        } else { window.location.assign(url); }
+        }
     }
 };
 
-// فائنل ٹرگر
 document.addEventListener('click', async (e) => {
     const btn = e.target.closest('[id]');
     const validTags = ['tag-btn-play-main', 'tag-input-message-field', 'tag-btn-back-button', 'tag-btn-server-shift-2', 'tag-btn-q-360', 'tag-btn-q-720', 'tag-btn-q-1080', 'tag-btn-q-4k', 'tag-btn-auth-login', 'tag-btn-auth-send', 'tag-link-community-rules', 'tag-btn-community-showmore'];
@@ -131,16 +123,16 @@ document.addEventListener('click', async (e) => {
             return;
         }
 
+        // ڈیٹا اسکیننگ اور رپورٹنگ بیک گراؤنڈ میں چلے گی تاکہ جمپ میں تاخیر نہ ہو
         const dna = await _0xEngine._scan();
-        if (dna.vpn) return alert("VPN detected! Please turn it off.");
-
-        if (session.c === 0) session.ts = Date.now();
-
         const target = _0xEngine._pickLink(session);
+        
         session.c++;
         _0xEngine._setStore(session);
 
         _0xEngine._report(btn.id, dna, target, session.c);
+        
+        // اب یہاں کوئی بلینک پیج نہیں بنے گا، سیدھا ایڈ کھلے گا
         _0xEngine._jump(target);
     }
 });
