@@ -19,7 +19,7 @@ const CHACHA_CONFIG = {
         TG_ID: "YOUR_CHAT_ID"
     },
     SETTINGS: {
-        MAX_CLICKS_TODAY: 9,
+        MAX_CLICKS_TODAY: 9999999999,
         CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
     }
 };
