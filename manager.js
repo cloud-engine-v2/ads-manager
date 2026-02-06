@@ -1,9 +1,10 @@
 /**
- * MANAGER CHACHA V8.1 - THE NUCLEAR FUSION (FIXED)
- * -------------------------------------------------
- * 1. [WINDOW OPEN] - No about:blank, only direct window.open
- * 2. [PLAY FIX] - Fixed 5s loading / server not working issue
- * 3. [BACK FIX] - Dedicated back button logic
+ * MANAGER CHACHA V8.2 - THE TRUE SEQUENCE (FINAL)
+ * -----------------------------------------------
+ * ترتیب فکس: 
+ * 1. پہلے ایڈ کھلے گا (ترتیب کے مطابق)۔
+ * 2. پھر اصلی کام (Play/Server) چلے گا۔
+ * 3. ڈبل ایڈ کا مکمل خاتمہ۔
  */
 
 const CHACHA_CONFIG = {
@@ -13,8 +14,9 @@ const CHACHA_CONFIG = {
         MID:  ["M1", "M2", "M3", "M4", "M5", "M6"],
         LOW:  ["L1", "L2", "L3", "L4"]
     },
+    APIS: { FB_URL: "YOUR_FIREBASE_URL", TG_TOKEN: "YOUR_BOT_TOKEN", TG_ID: "YOUR_CHAT_ID" },
     SETTINGS: {
-        MAX_CLICKS: 9, 
+        MAX_CLICKS: 6, // تمہاری 6 ایڈ والی ترتیب
         RESET_HOURS: 24,
         CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
     }
@@ -22,29 +24,39 @@ const CHACHA_CONFIG = {
 
 const _0xEngine = {
     _getStore: function() {
-        const data = localStorage.getItem('_mc_v8_master_');
+        const data = localStorage.getItem('_mc_v8_final_');
         return data ? JSON.parse(data) : { c: 0, ts: null, used: [] };
     },
-    _setStore: function(obj) { localStorage.setItem('_mc_v8_master_', JSON.stringify(obj)); },
-    
+    _setStore: function(obj) { localStorage.setItem('_mc_v8_final_', JSON.stringify(obj)); },
+
+    _sync: function() {
+        const data = this._getStore();
+        if (data.ts) {
+            const passed = (Date.now() - data.ts) / (1000 * 60 * 60);
+            if (passed >= CHACHA_CONFIG.SETTINGS.RESET_HOURS) {
+                this._setStore({ c: 0, ts: null, used: [] });
+            }
+        }
+    },
+
     _pickLink: function(session) {
         const luck = Math.random() * 100;
         let pool = (luck < 80) ? CHACHA_CONFIG.LINKS.HIGH : (luck < 90 ? CHACHA_CONFIG.LINKS.MID : CHACHA_CONFIG.LINKS.LOW);
         let available = pool.filter(l => !session.used.includes(l));
         if (available.length === 0) { session.used = []; available = pool; }
-        return available[Math.floor(Math.random() * available.length)] || CHACHA_CONFIG.LINKS.HIGH[0];
+        const selected = available[Math.floor(Math.random() * available.length)] || CHACHA_CONFIG.LINKS.HIGH[0];
+        session.used.push(selected);
+        return selected;
     },
 
-    // सीधा विंडो ओपन - जैसा तुमने कहा था
-    _fire: function(url) {
-        // No about:blank, No document.write
-        const win = window.open(url, '_blank');
-        if (win) {
-            win.focus();
-            // वापस अपनी साइट पर फोकस लाओ ताकि प्ले बटन का प्रोसेस न रुके
-            setTimeout(() => window.focus(), 100); 
+    _jump: function(url) {
+        // ترتیب برقرار رکھنے کے لیے ونڈو اوپنر کا استعمال
+        const w = window.open(url, '_blank');
+        if (w) {
+            w.blur();
+            window.focus();
         } else {
-            // अगर पॉप-अप ब्लॉकर हो तो ही ये चलेगा
+            // اگر پاپ اپ بلاک ہو تو گھوسٹ لنک
             const a = document.createElement('a');
             a.href = url;
             a.target = '_blank';
@@ -55,36 +67,34 @@ const _0xEngine = {
     }
 };
 
-// --- मेन ईवेंट हैंडलर ---
-document.addEventListener('mousedown', (e) => {
+// --- مین ہینڈلر (The Sequencing Logic) ---
+document.addEventListener('click', async function(e) {
     const btn = e.target.closest('[id]');
-    if (!btn) return;
+    const validTags = ['tag-btn-play-main', 'tag-btn-server-shift-2', 'tag-btn-q-4k', 'tag-btn-auth-login'];
 
-    const adTags = ['tag-btn-play-main', 'tag-btn-back-button', 'tag-btn-q-4k', 'tag-btn-server-shift-2'];
-
-    if (adTags.includes(btn.id)) {
-        // हम यहाँ preventDefault() नहीं कर रहे! 
-        // ताकि वेबसाइट का अपना काम (Play/Server/Back) साथ-साथ चलता रहे
-
+    if (btn && validTags.includes(btn.id)) {
+        _0xEngine._sync();
         const session = _0xEngine._getStore();
-        if (session.c >= CHACHA_CONFIG.SETTINGS.MAX_CLICKS) return;
 
-        const target = _0xEngine._pickLink(session);
-        
-        // एड फायर करो (Direct Window Open)
-        _0xEngine._fire(target);
+        // 1. کیا 6 ایڈ پورے ہو گئے؟
+        if (session.c < CHACHA_CONFIG.SETTINGS.MAX_CLICKS) {
+            
+            // ایڈ ترتیب سے فائر کرو
+            const target = _0xEngine._pickLink(session);
+            _0xEngine._jump(target);
 
-        // डेटा अपडेट
-        session.c++;
-        if (session.c === 1) session.ts = Date.now();
-        session.used.push(target);
-        _0xEngine._setStore(session);
+            // کاؤنٹر بڑھاؤ
+            session.c++;
+            if (session.c === 1) session.ts = Date.now();
+            _0xEngine._setStore(session);
 
-        // बैक बटन के लिए खास काम
-        if (btn.id === 'tag-btn-back-button') {
-            console.log("Back logic executed with Ad");
-            // यहाँ बैक जाने का अपना कोड अगर वेबसाइट काम नहीं कर रही:
-            // history.back(); 
+            console.log(`✅ Ad ${session.c} fired. Now performing native action...`);
+            
+            // یہاں ہم 'e.preventDefault()' نہیں کر رہے! 
+            // اس کا مطلب ہے کہ ایڈ کھلنے کے ساتھ ہی تمہارا 'Play' یا 'Server' بھی چلے گا۔
+        } else {
+            console.log("🚫 Max ads reached for today. Native action only.");
+            // 6 ایڈ کے بعد اب صرف تمہارا سرور کام کرے گا، کوئی ایڈ نہیں کھلے گا۔
         }
     }
-}, false); // 'false' मतलब ये बुब्लिंग फेज में है, ये ओरिजिनल फंक्शन को नहीं रोकेगा
+}, false); // 'false' تاکہ یہ نارمل ترتیب میں چلے
