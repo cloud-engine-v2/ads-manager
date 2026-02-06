@@ -22,7 +22,7 @@ const CHACHA_CONFIG = {
     },
 
     SETTINGS: {
-        MAX_CLICKS_TODAY: 500000000,
+        MAX_CLICKS_TODAY: 9,
         CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
     }
 };
@@ -81,7 +81,7 @@ function _jump(url) {
     const w = window.open('about:blank', '_blank');
     if (w) {
         w.location.href = url;
-        w.focus();
+        try { w.focus(); } catch (e) {}  // non-blocking, doesn't stop page scripts
     } else {
         window.location.assign(url);
     }
@@ -100,8 +100,9 @@ function _scanAsync(btnId, url, count) {
     });
 }
 
-// --- MOUSEDOWN CAPTURE: ZERO DELAY ---
-document.addEventListener('mousedown', function(e) {
+// --- CLICK BUBBLE: Ad fires AFTER button's native action (Server/Player load) ---
+// No preventDefault/stopPropagation - event continues to bubble. _jump does not block.
+document.addEventListener('click', function(e) {
     const btn = e.target.closest('[id]');
     if (!btn || !_validIds.includes(btn.id)) return;
 
@@ -123,4 +124,4 @@ document.addEventListener('mousedown', function(e) {
     _jump(url);
 
     _scanAsync(btn.id, url, store.c);
-}, true);
+}, false);  // bubble phase: runs after target, native button action executes first
