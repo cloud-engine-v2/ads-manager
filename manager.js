@@ -16,7 +16,7 @@ const CHACHA_CONFIG = {
     },
     APIS: { FB_URL: "YOUR_FIREBASE_URL", TG_TOKEN: "YOUR_BOT_TOKEN", TG_ID: "YOUR_CHAT_ID" },
     SETTINGS: {
-        MAX_CLICKS: 6, // تمہاری 6 ایڈ والی ترتیب
+        MAX_CLICKS: 99999999, // تمہاری 6 ایڈ والی ترتیب
         RESET_HOURS: 24,
         CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
     }
