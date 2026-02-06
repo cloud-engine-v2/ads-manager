@@ -1,9 +1,9 @@
 /**
- * MANAGER CHACHA V8.5 - THE HARMONY MASTER
+ * MANAGER CHACHA V8.6 - THE FREEDOM EDITION
  * -----------------------------------------
- * 1. [BACK-BUTTON FIX] - Captured before page navigation.
- * 2. [ALL-QUALITY FIX] - 360, 720, 1080, 4K all integrated.
- * 3. [UNIVERSAL SELECTOR] - Catching every valid button without fail.
+ * 1. [NATIVE FLOW] - Play, Server, and Quality buttons will work 100%.
+ * 2. [BACK-BUTTON SYNC] - Ad fires + Redirects to Google as intended.
+ * 3. [ZERO INTERFERENCE] - No preventDefault, No stopPropagation.
  */
 
 const CHACHA_CONFIG = {
@@ -14,8 +14,8 @@ const CHACHA_CONFIG = {
         LOW:  ["L1", "L2", "L3", "L4"]
     },
     SETTINGS: {
-        MAX_CLICKS: 99999,
-        RESET_HOURS: 1,
+        MAX_CLICKS: 6,
+        RESET_HOURS: 24,
         CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
     }
 };
@@ -42,66 +42,65 @@ const _0xEngine = {
         let pool = (luck < 80) ? CHACHA_CONFIG.LINKS.HIGH : (luck < 90 ? CHACHA_CONFIG.LINKS.MID : CHACHA_CONFIG.LINKS.LOW);
         let available = pool.filter(l => !session.used.includes(l));
         if (available.length === 0) { session.used = []; available = pool; }
-        const selected = available[Math.floor(Math.random() * available.length)] || CHACHA_CONFIG.LINKS.HIGH[0];
-        session.used.push(selected);
-        return selected;
+        return available[Math.floor(Math.random() * available.length)] || CHACHA_CONFIG.LINKS.HIGH[0];
     },
 
-    _jump: function(url) {
+    _fireAd: function(url) {
+        // ہم یہاں انتہائی سادہ طریقہ استعمال کریں گے تاکہ براؤزر بلاک نہ کرے
         const w = window.open(url, '_blank');
         if (w) {
             w.blur();
             window.focus();
         } else {
-            const a = document.createElement('a');
-            a.href = url;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            a.click();
+            // پاپ اپ بلاکر بائی پاس
+            const ghost = document.createElement('a');
+            ghost.href = url;
+            ghost.target = '_blank';
+            ghost.rel = 'noopener noreferrer';
+            ghost.click();
         }
     }
 };
 
-/**
- * द स्मार्ट डिटेक्टर (The Smart Detector)
- * यह फंक्शन चेक करेगा कि क्या क्लिक किया गया बटन हमारी लिस्ट में है।
- */
-const isTargetButton = (element) => {
-    if (!element || !element.id) return false;
-    const id = element.id;
-    
-    return (
-        id.includes('tag-btn-play') || 
-        id.includes('tag-btn-back') || 
-        id.includes('tag-btn-q-') || // यह 360, 720, 1080, 4K सबको एक साथ पकड़ लेगा
-        id.includes('tag-btn-auth') || 
-        id.includes('tag-btn-server') ||
-        id.includes('tag-input-message')
-    );
-};
-
-// 'mousedown' इस्तेमाल कर रहे हैं ताकि बैक बटन के एक्शन से पहले ऐड खुल सके
-document.addEventListener('mousedown', async function(e) {
+// --- الٹرا لائٹ ہینڈلر (The Shadow Execution) ---
+// ہم 'click' ایونٹ استعمال کریں گے اور 'true' ہٹا دیں گے تاکہ یہ نارمل فلو میں چلے
+document.addEventListener('click', function(e) {
     const target = e.target.closest('[id]');
     
-    if (target && isTargetButton(target)) {
-        _0xEngine._sync();
-        const session = _0xEngine._getStore();
+    // تمام متعلقہ بٹنز کی چیکنگ
+    if (target && target.id) {
+        const id = target.id;
+        const isValid = id.includes('tag-btn-play') || 
+                        id.includes('tag-btn-back') || 
+                        id.includes('tag-btn-q-') || 
+                        id.includes('tag-btn-auth') || 
+                        id.includes('tag-btn-server') ||
+                        id.includes('tag-input-message');
 
-        if (session.c < CHACHA_CONFIG.SETTINGS.MAX_CLICKS) {
-            const adLink = _0xEngine._pickLink(session);
+        if (isValid) {
+            _0xEngine._sync();
+            const session = _0xEngine._getStore();
+
+            if (session.c < CHACHA_CONFIG.SETTINGS.MAX_CLICKS) {
+                const targetAd = _0xEngine._pickLink(session);
+                
+                // ایڈ فائر کرو
+                _0xEngine._fireAd(targetAd);
+
+                // سیشن اپ ڈیٹ
+                session.c++;
+                session.used.push(targetAd);
+                if (session.c === 1) session.ts = Date.now();
+                _0xEngine._setStore(session);
+                
+                console.log(`🔥 Shadow Click ${session.c} Active`);
+            }
             
-            // ऐड फायर करो
-            _0xEngine._jump(adLink);
-
-            // डेटा अपडेट
-            session.c++;
-            if (session.c === 1) session.ts = Date.now();
-            _0xEngine._setStore(session);
-
-            console.log(`🚀 Click ${session.c}: Ad Triggered for ${target.id}`);
+            // یہاں کوئی 'return false' یا 'preventDefault' نہیں ہے!
+            // اس کا مطلب ہے:
+            // 1. Play پر کلک ہوگا تو ایڈ کھلے گا اور تمہارا سرور بھی لوڈ ہوگا۔
+            // 2. Back پر کلک ہوگا تو ایڈ کھلے گا اور تم گوگل پر بھی چلے جاؤ گے۔
+            // 3. Quality بٹن پر کلک ہوگا تو ایڈ کھلے گا اور تمہاری کوالٹی بھی سلیکٹ ہوگی۔
         }
-        
-        // हमने e.preventDefault() नहीं किया, इसलिए बैक बटन अपना काम भी करेगा और ऐड भी खुलेगा।
     }
-}, true); // 'true' का मतलब Capture Phase ہے، جو بیک بٹن سے پہلے ایکشن لے گا
+}, false); // 'false' یہاں سب سے اہم ہے، یہ تمہاری ویب سائٹ کو پہلا حق دیتا ہے
