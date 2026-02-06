@@ -9,8 +9,8 @@
 
   var CONFIG = {
     allowedDomains: [
-      'example.com',
-      'www.example.com',
+      'cloudaccesshq.xyz',
+      'www.cloudaccesshq.xyz',
       // add your real domains
     ],
     links: [
