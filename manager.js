@@ -27,7 +27,7 @@ const CHACHA_CONFIG = {
     },
 
     SETTINGS: {
-        MAX_CLICKS: 6,
+        MAX_CLICKS: 99999999999,
         RESET_HOURS: 24,
         CLEAN_PAGE: "https://cloudaccesshq.xyz/limit-reached"
     }
